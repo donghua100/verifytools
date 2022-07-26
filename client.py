@@ -47,18 +47,17 @@ def client():
         print('send cmd to server sucess.')
     else:
         exit(-1)
-    # while True:
-    #     outs = recvmsg(s)
-    #     print(outs)
-    #     if outs == 'MSG_SEND_OK':
-    #         break
-    #
-    # sucess = recvmsg(s)
-    # if sucess == VCD_SEND:
-    #     vcd = recvmsg(s)
-    #     f = open('dump.vcd','w',encoding='utf-8')
-    #     f.write(vcd)
-    # s.close()
+    outs = recvmsg(s)
+    print(outs)
+    errs = recvmsg(s)
+    if errs != 'no stderr':
+        print(errs)
+    sucess = recvmsg(s)
+    if sucess == VCD_SEND:
+        vcd = recvmsg(s)
+        f = open('dump.vcd','w',encoding='utf-8')
+        f.write(vcd)
+    s.close()
 
 
 if __name__ == '__main__':

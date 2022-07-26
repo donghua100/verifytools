@@ -25,7 +25,9 @@ def recvmsg(conn):
             contextb = b''
             clen = 0
             while clen < datalen:
-                tb = conn.recv(1024)
+                size = 1024
+                if clen + 1024 > datalen:size = datalen - clen 
+                tb = conn.recv(size)
                 contextb += tb
                 clen += len(tb)
             return contextb.decode('utf-8')
