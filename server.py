@@ -4,7 +4,7 @@ import os
 import uuid
 
 from msg import sendmsg,recvmsg
-from setting import HOST,PORT,MSG_SEND_OK,MSG_RECV_OK,BMC,BMC_DONE
+from setting import HOST, PONO,PORT,MSG_SEND_OK,MSG_RECV_OK,BMC,BMC_DONE
 from setting import VCD_SEND
 
 
@@ -20,7 +20,7 @@ def server():
             os.mkdir('btor')
         if not os.path.exists('vcd'):
             os.mkdir('vcd')
-        fname = 'btor/' + uuid.uuid4().hex
+        fname = 'btor/' + uuid.uuid4().hex + '.btor2'
         f = open(fname,'w',encoding='utf-8')
         
         data = recvmsg(conn)
@@ -30,13 +30,17 @@ def server():
         
         
         cmd = recvmsg(conn)
-        
         sendmsg(MSG_SEND_OK,conn)
-        vcdpath = 'vcd/' + uuid.uuid4().hex
-        cmd = BMC + ' ' + fname +  ' ' + cmd + ' ' + '-vcdpath ' + vcdpath
-        print(cmd)
         lcmd = cmd.split()
-        proc = sp.Popen(lcmd,stdout=sp.PIPE,stderr=sp.PIPE,encoding='utf-8')
+        rcmd = ' '.join(lcmd[:-1])
+        vcdpath = 'vcd/' + uuid.uuid4().hex
+        if lcmd[-1] == 'bmc':
+            rcmd = BMC + ' ' + fname +  ' ' + rcmd + ' --vcd '+ vcdpath
+        elif lcmd[-1] == 'pono':
+            rcmd = PONO + ' ' + rcmd + ' ' + '--vcd ' + vcdpath + ' ' + fname
+        print(rcmd)
+        lrcmd = rcmd.split()
+        proc = sp.Popen(lrcmd,stdout=sp.PIPE,stderr=sp.PIPE,encoding='utf-8')
         flag = False
         try:
             outs,errs = proc.communicate(timeout=3600)
@@ -48,7 +52,7 @@ def server():
         sendmsg(outs,conn)
         if not errs: errs = 'no stderr'
         sendmsg(errs,conn)
-        if '-vcd' in lcmd and os.path.exists(vcdpath):
+        if os.path.exists(vcdpath):
             f = open(vcdpath,'r',encoding='utf-8')
             sendmsg(VCD_SEND,conn)
             sendmsg(f.read(),conn)

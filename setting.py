@@ -1,5 +1,7 @@
 BMC = '/home/guishuo/linux/bmc/build/bmc'
-HOST = '172.26.171.34'
+PONO = '/home/guishuo/linux/pono/build/pono'
+
+HOST = '127.0.0.1'
 PORT = 2678
 
 MSG_SEND_OK = 'msg send ok'
