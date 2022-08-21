@@ -1,0 +1,6 @@
+mode:prove
+engine:avrpr
+solver:yices
+timeout:-1
+filetype: btor
+options:
