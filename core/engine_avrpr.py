@@ -7,11 +7,10 @@ def run(task):
     logfilename = 'engine_avrpr.txt'
     avrpath = task.avr_path
     # avrbin = f'{avrpath}/build/bin_{task.solver}'
-    curdir = os.path.abspath(os.curdir)
-    avrout = f'{curdir}/{task.workdir}/avr'
+    avrout = f'{task.workdir}/avr'
     name = 'foo'
-    file = f'{curdir}/{task.designdir}/{task.filename}.btor'
-    workers = f'{curdir}/{task.workdir}/workers.txt'
+    file = f'{task.designdir}/{task.filename}.btor'
+    workers = f'{task.workdir}/workers.txt'
     opts = task.engine_opt
     timeout = 0
     if task.task_timeout is None:

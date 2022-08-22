@@ -156,7 +156,7 @@ class VerifTask(TaskConfig):
 
     def log(self,msg):
         tm = time.localtime()
-        line = "VERIF {:02d}:{:02d}:{:02d} [{}] {}".format(tm.tm_hour,tm.tm_min,tm.tm_sec,self.workdir,msg)
+        line = "[VERIF {:02d}:{:02d}:{:02d}] {}".format(tm.tm_hour,tm.tm_min,tm.tm_sec,msg)
         for f in self.log_targets:
             print(line,file=f,flush=True)
 
@@ -227,7 +227,7 @@ verifiedtools run on server
 logmsgs = []
 def log(workdir:str,msg:str):
     tm = time.localtime()
-    logmsgs.append("VERIF {:02d}:{:02d}:{:02d} [{}] {}".format(tm.tm_hour,tm.tm_min,tm.tm_sec,workdir,msg))
+    logmsgs.append("[VERIF {:02d}:{:02d}:{:02d}] {}".format(tm.tm_hour,tm.tm_min,tm.tm_sec,msg))
     print(logmsgs[-1])
 
 
@@ -237,7 +237,6 @@ if __name__ == '__main__':
     p.add_argument('configfile',help='config file',type=str)
     p.add_argument('-s','--srcfile',help='the file to verify',type=str,required=True)
     p.add_argument('-d','--workdir',help='set workdir',metavar='workdir',type=str)
-    p.add_argument('-w','--workers',help='worker config file for avrpr',metavar='workers',type=str)
     p.add_argument('-f','--force',help='overwite the existsed path',action='store_true')
     p.add_argument('-t','--top',help='specific the top module for sv file',type=str,default=None)
     arg = p.parse_args()
@@ -249,6 +248,7 @@ if __name__ == '__main__':
     if workdir == None:
         workdir = os.path.basename(configfile)
         workdir = os.path.splitext(workdir)[0]
+        workdir = f'{os.path.abspath(os.curdir)}/{workdir}'
 
     if os.path.exists(workdir):
         if not force:

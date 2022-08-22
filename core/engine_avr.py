@@ -8,12 +8,11 @@ def run(task):
     logfilename = 'engine_avr.txt'
     avrpath = task.avr_path
     avrbin = f"{avrpath}/build/bin_{task.solver}"
-    curdir = os.path.abspath(os.curdir)
-    avrout = f'{curdir}/{task.workdir}/avr'
+    avrout = f'{task.workdir}/avr'
     name = task.mode
     opts = task.engine_opt
     depth = task.depth
-    file = f"{curdir}/{task.designdir}/{task.filename}.btor"
+    file = f"{task.designdir}/{task.filename}.btor"
     timeout = 0
     if task.task_timeout is None:
         timeout=3600*24
