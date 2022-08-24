@@ -26,7 +26,7 @@ def run(task):
             if line == 'unknown':
                 status = 'UNKNOWN'
             if line == 'error':
-                status = 'ERROR'
+                status = 'UNKNOWN'
             if wit_start:
                 witness.append(line)
                 if line == '.':

@@ -26,7 +26,7 @@ def run(task):
         proc = Proc.Proc(task,"run avr prove",cmdline,logfilename)
     else:
         assert 0
-    def output_callback(outs=None):
+    def output_callback(outs):
         avr_workdir = f"{avrout}/work_{name}"
         status = None
         check_steps = 0

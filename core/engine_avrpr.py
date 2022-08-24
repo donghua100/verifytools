@@ -1,4 +1,5 @@
 import os
+import re
 import Proc
 import shutil
 
@@ -17,9 +18,9 @@ def run(task):
         timeout = 3600*24
     else:
         timeout = task.task_timeout + 5*60
-    cmdline = f'cd {avrpath};python3 avr_pr.py -o {avrout} -n {name} {opts} -w {workers} --timeout {timeout} {file}'
+    cmdline = f'cd {avrpath};python3 avr_pr.py -o {avrout} -n {name} {opts} --timeout {timeout} -w {workers} {file}'
     proc = Proc.Proc(task, 'run avrpr', cmdline, logfilename)
-    def output_callback(outs=None):
+    def output_callback(outs):
         status = 'UNKNOWN'
         avr_workdir = f'{avrout}/pr_{name}'
         srccex = f'{avr_workdir}/cex.witness'
@@ -43,6 +44,17 @@ def run(task):
                 inv_smt = open(srcsmt,'r')
                 f.write(inv_smt.read())
                 inv_smt.close()
+        if status == 'UNKNOWN':
+            if outs:
+                strouts = ''.join(outs)
+                match = re.findall(r'proof race finished with answer safe',strouts)
+                if len(match) > 0:
+                    status = 'SAFE'
+                match = re.findall(r'proof race finished with answer unsafe',strouts)
+                if len(match) > 0:
+                    status = 'UNSAFE'
+            if status != 'UNKNOWN':
+                task.log(f'task status is {status},but no trace file')
         task.status = status
     proc.output_callback = output_callback
         

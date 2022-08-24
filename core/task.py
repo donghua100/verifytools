@@ -88,6 +88,8 @@ class VerifTask(TaskConfig):
         self.deps = []
         self.proc_pending = []
         self.proc_running = []
+
+        # [UNSAFE,SAFE,UNKNOWN,TIMEOUT]
         self.status = None
         self.timeout_callback = None
         self.filename = None
@@ -112,10 +114,6 @@ class VerifTask(TaskConfig):
             self.log(f"Task TIMEOUT:{self.task_timeout} seconds.Terminating all subprocess")
             self.status = 'TIMEOUT'
             self.terminate(timeout=True)
-    def error(self,msg):
-        self.status = 'ERROR'
-        self.log(f"ERROR:{msg}")
-        self.terminate()
 
     def terminate(self,timeout=False):
         if timeout:
