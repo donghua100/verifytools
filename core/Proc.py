@@ -30,6 +30,7 @@ class Proc():
             if not line:
                 break
             self.outs.append(line.strip())
+            # print(self.outs)
         self.handle_output()
     
     def log(self,msg):
@@ -43,6 +44,7 @@ class Proc():
             self.task.log(f'subprocess({self.info}:{self.p.pid}) has no output')
             return
         if self.output_callback is not None:
+            # print(self.outs)
             self.output_callback(self.outs)
         for line in self.outs:
             self.log(line)

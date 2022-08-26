@@ -31,16 +31,20 @@ def run(task):
         status = None
         check_steps = 0
         with open(f"{avr_workdir}/result.pr", 'r') as f:
-            line = f.readlines()[0]
-            line= line.strip()
-            if line == 'avr-v':
-                status = "UNSAFE"
-            elif line == 'avr-h':
-                status = 'SAFE'
-            elif line == 'avr-f_err':
-                status = 'UNKNOWN'
+            lines = f.readlines()
+            if len(lines) != 0:
+                line = lines[0]
+                line= line.strip()
+                if line == 'avr-v':
+                    status = "UNSAFE"
+                elif line == 'avr-h':
+                    status = 'SAFE'
+                elif line == 'avr-f_err':
+                    status = 'UNKNOWN'
+                else:
+                    assert 0,'unknown status'
             else:
-                assert 0,'unknown status'
+                status = 'TIMEOUT'
         if status == 'UNSAFE':
             if not os.path.isfile(f"{avr_workdir}/cex.witness"):
                 task.log("can't find witness file")
@@ -65,11 +69,12 @@ def run(task):
                 inv_smt = open(f"{avr_workdir}/inv.smt2",'r')
                 f.write(inv_smt.read())
                 inv_smt.close()
-        elif status == 'UNKNOWN':
+        elif status in ['UNKNOWN','TIMEOUT']:
             with open(f'{avr_workdir}/avr.err','r') as f:
                 for line in f.readlines():
                     line = line.strip()
-                    match = re.match(r'^\(bmc: safe till step (\d+)\)', line)
+                    print(line)
+                    match = re.search(r'\(bmc: safe till step (\d+)\)', line)
                     if match:
                         check_steps = int(match.group(1))
         else:
