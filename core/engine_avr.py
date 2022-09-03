@@ -44,7 +44,7 @@ def run(task):
                 else:
                     assert 0,'unknown status'
             else:
-                status = 'TIMEOUT'
+                status = 'UNKNOWN'
         if status == 'UNSAFE':
             if not os.path.isfile(f"{avr_workdir}/cex.witness"):
                 task.log("can't find witness file")
