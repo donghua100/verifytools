@@ -22,6 +22,7 @@ class TaskConfig():
         self.solver = solver_default
         self.engine_opt = engine_opt_default
         self.task_timeout = None
+        self.top = None
     def parser_config(self,configfile:str,workdir:str):
         with open(configfile,'r') as f:
             lines = f.readlines()
@@ -44,6 +45,8 @@ class TaskConfig():
                     config_dict['timeout'] = int(rhs)
                 if lhs == 'solver':
                     config_dict['solver'] = rhs
+                # if lhs == 'top':
+                #     config_dict['top'] = rhs
                 config_dict[lhs] = rhs
             with open(f"{workdir}/config.json","w") as fjson:
                 json.dump(config_dict,fjson,indent=4)
@@ -57,6 +60,7 @@ class TaskConfig():
             self.task_timeout = int(config['timeout']) if int(config['timeout']) > 0 else None
             self.file_type = config['filetype']
             self.solver = config['solver']
+            # self.top = config['top']
 
 class VerifTask(TaskConfig):
     def __init__(self,configfile:str,workdir:str,earlylogs:list,logfile=None):
@@ -93,7 +97,6 @@ class VerifTask(TaskConfig):
         self.status = None
         self.timeout_callback = None
         self.filename = None
-        self.top = None
         self.bmc_steps = 0
     
     # manage process in task
@@ -254,6 +257,9 @@ if __name__ == '__main__':
             sys.exit(-1)
         else:
             shutil.rmtree(workdir,ignore_errors=True)
+    if  not os.path.abspath(workdir):
+        workdir = f'{os.path.abspath(os.curdir)}/{workdir}'
+
     os.mkdir(workdir)
 
     task = VerifTask(configfile,workdir,logmsgs)

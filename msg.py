@@ -16,24 +16,20 @@ def sendmsg(msg:str,conn):
 
 def recvmsg(conn):
     def recv():
-        try:
-            hlenb = conn.recv(4)
-            hlen = struct.unpack('i',hlenb)[0]
-            hbyte = conn.recv(hlen)
-            hjson = json.loads(hbyte.decode('utf-8'))
-            datalen = hjson['datalen']
-            contextb = b''
-            clen = 0
-            while clen < datalen:
-                size = 1024
-                if clen + 1024 > datalen:size = datalen - clen 
-                tb = conn.recv(size)
-                contextb += tb
-                clen += len(tb)
-            return contextb.decode('utf-8')
-        except Exception as e:
-            print(e)
-            return None
+        hlenb = conn.recv(4)
+        hlen = struct.unpack('i',hlenb)[0]
+        hbyte = conn.recv(hlen)
+        hjson = json.loads(hbyte.decode('utf-8'))
+        datalen = hjson['datalen']
+        contextb = b''
+        clen = 0
+        while clen < datalen:
+            size = 1024
+            if clen + 1024 > datalen:size = datalen - clen 
+            tb = conn.recv(size)
+            contextb += tb
+            clen += len(tb)
+        return contextb.decode('utf-8')
     r = recv()
     return r
     

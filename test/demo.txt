@@ -2,5 +2,5 @@ mode:bmc 10000
 engine:avr
 solver:z3c
 timeout:3
-filetype: sv
+filetype: btor
 options:

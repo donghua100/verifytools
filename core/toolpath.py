@@ -1,3 +1,3 @@
-AVRPATH='/home/guishuo/linux/avrtools'
-PONOPATH='/home/guishuo/linux/pono'
+AVRPATH='/home/guishuo/mc/mctools/avrtools'
+PONOPATH='/home/guishuo/mc/mctools/pono'
 PONO=f'{PONOPATH}/build/pono'

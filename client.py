@@ -1,68 +1,62 @@
+import os
 import socket
 import argparse
 from msg import sendmsg,recvmsg
-from setting import BMC_DONE, HOST,PORT,MSG_SEND_OK,MSG_RECV_OK,BMC_DONE, VCD_SEND
+from setting import HOST,PORT
+import logging as log
 
 descr = 'run bmc on a server'
 
 def parser_cmd():
     # python3 client.py bmc 
     parser = argparse.ArgumentParser(description=descr)
-    parser.add_argument('-k','--ksteps',dest='k',metavar='N',type=int,default=10,help='run bmc N steps')
-    parser.add_argument('--inv',action='store_true',default=False,help='use inverse bmc(only for bmc tool)')
-    #parser.add_argument('--vcd',action='store_true',default=False,help='print vcd file if find counterexample')
-    parser.add_argument('--smt-slover',dest='solver',metavar='solver' ,type=str,default='btor',help='available solver for bmc: btor,cvc5,z3')
-    parser.add_argument('-e','--engine',dest='e',type=str,default='bmc',help='Select engine from [bmc, bmc-sp, ind, interp,mbic3,\
-            ic3bits, ic3ia, msat-ic3ia, ic3sa,sygus-pdr] for pono;[bmc] for bmc')
-    parser.add_argument('file',metavar='file',type=str,help='btor files')
-    parser.add_argument('tool',metavar='tool',type=str,default='bmc',help='availbale tools:bmc,pono,avr')
+    parser.add_argument('-c', '--config', dest='c', required=True, help='config file')
+    parser.add_argument('-s', '--src', dest='s', required=True, help='src verify file')
+    parser.add_argument('-t', '--top', dest='t', default=None, help='top module for system verilog')
     args = parser.parse_args()
-    cmd = ''
-    if args.tool == 'bmc':
-        solvers = {'btor':0,'cvc5':1,'z3':2}
-        if args.solver not in solvers:
-            print('not availbale for bmc tool,see help')
-            exit(-1)
-        cmd += '-k {} -s {}'.format(args.k,solvers[args.solver])
-        if args.inv:cmd += ' -inv'
-
-    elif args.tool == 'pono':
-        cmd += '-e {} -k {} --smt-solver {} --witness'.format(args.e,args.k,args.solver)
-    print(cmd)
-    return args.file,cmd+ ' ' + args.tool
+    return args.c, args.s, args.t
 
 
 def client():
-    file,cmd = parser_cmd()
-    s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    cfg_path, src_path, top = parser_cmd()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    s.connect((HOST,PORT))
-    f = open(file,'r',encoding='utf-8')
-    print('upload the btor file...')
-    sendmsg(f.read(),s)
-    
-    sucess = recvmsg(s)
-    if sucess == MSG_SEND_OK:
-        print('upload sucess.')
+    s.connect((HOST, PORT))
+
+    cfg = open(cfg_path).read()
+    log.info('upload config file')
+    sendmsg(cfg, s)
+
+    src = open(src_path).read()
+    log.info('upload src verify file')
+    sendmsg(src, s)
+
+    srcname = os.path.basename(src_path)
+    srcname = os.path.splitext(srcname)[0]
+    sendmsg(srcname, s)
+
+    if top is not None:
+        sendmsg(top, s)
     else:
-        exit(-1)
-    print('send cmd to server...')
-    sendmsg(cmd,s)
-    sucess = recvmsg(s)
-    if sucess == MSG_SEND_OK:
-        print('send cmd to server sucess.')
-    else:
-        exit(-1)
-    outs = recvmsg(s)
-    print(outs)
-    errs = recvmsg(s)
-    if errs != 'no stderr':
-        print(errs)
-    sucess = recvmsg(s)
-    if sucess == VCD_SEND:
-        vcd = recvmsg(s)
-        f = open('dump.vcd','w',encoding='utf-8')
-        f.write(vcd)
+        sendmsg('NO TOP',s)
+
+    res_data = recvmsg(s)
+    outs_dir = 'tasks'
+    if not os.path.exists(outs_dir):
+        os.mkdir(outs_dir)
+    res_dir = f'{outs_dir}/{srcname}'
+    if not os.path.exists(res_dir):
+        os.mkdir(res_dir)
+    result = open(f'{res_dir}/result.txt','w')
+    result.write(res_data)
+    result.close()
+    log.info(res_data)
+
+    trace_data = recvmsg(s)
+    if trace_data != 'NO TRACE':
+        log.info(trace_data)
+        trace = open(f'{res_dir}/trace.txt', 'w')
+        trace.write(trace_data)
     s.close()
 
 
