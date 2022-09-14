@@ -1,0 +1,16 @@
+tasks = ["foo","bar"]
+[foo]
+engine = "avr"
+mode = "bmc"
+depth = 100
+solver = "btor"
+[bar]
+engine = "avr"
+mode = "prove"
+solver = "msat"
+[file]
+name = "mycounter-false.btor"
+type = "btor"
+[server]
+ip = "127.0.0.1"
+port = "2678"

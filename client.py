@@ -1,53 +1,47 @@
 import os
 import socket
 import argparse
+from tomlkit import dumps, parse
 from msg import sendmsg,recvmsg
-from setting import HOST,PORT
 import logging as log
 
-descr = 'run bmc on a server'
+descr = 'run verify tolls on a server'
 
 def parser_cmd():
     # python3 client.py bmc 
     parser = argparse.ArgumentParser(description=descr)
-    parser.add_argument('-c', '--config', dest='c', required=True, help='config file')
-    parser.add_argument('-s', '--src', dest='s', required=True, help='src verify file')
-    parser.add_argument('-t', '--top', dest='t', default=None, help='top module for system verilog')
+    parser.add_argument('config', help='config file')
+    parser.add_argument('-o', '--output', help='output dir',type=str,default=None)
     args = parser.parse_args()
-    return args.c, args.s, args.t
+    return args.config,args.output
 
 
 def client():
-    cfg_path, src_path, top = parser_cmd()
+    cfg_path,outs_dir    = parser_cmd()
+    cfg         = parse(open(cfg_path).read())
+    ip          = cfg['server']['ip']
+    port        = int(cfg['server']['port'])
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((ip, port))
+    srcfile = cfg['file']['name']
+    srcname = os.path.basename(srcfile)
+    srcname = os.path.splitext(srcname)[0]
+    cfg['file']['name'] = srcname
 
-    s.connect((HOST, PORT))
-
-    cfg = open(cfg_path).read()
     log.info('upload config file')
-    sendmsg(cfg, s)
+    sendmsg(dumps(cfg), s)
 
-    src = open(src_path).read()
+    src = open(srcfile).read()
+
     log.info('upload src verify file')
     sendmsg(src, s)
 
-    srcname = os.path.basename(src_path)
-    srcname = os.path.splitext(srcname)[0]
-    sendmsg(srcname, s)
-
-    if top is not None:
-        sendmsg(top, s)
-    else:
-        sendmsg('NO TOP',s)
-
     res_data = recvmsg(s)
-    outs_dir = 'tasks'
+    if outs_dir is None:
+        outs_dir = f'{srcname}'
     if not os.path.exists(outs_dir):
         os.mkdir(outs_dir)
-    res_dir = f'{outs_dir}/{srcname}'
-    if not os.path.exists(res_dir):
-        os.mkdir(res_dir)
-    result = open(f'{res_dir}/result.txt','w')
+    result = open(f'{outs_dir}/results.txt','w')
     result.write(res_data)
     result.close()
     log.info(res_data)
@@ -55,7 +49,7 @@ def client():
     trace_data = recvmsg(s)
     if trace_data != 'NO TRACE':
         log.info(trace_data)
-        trace = open(f'{res_dir}/trace.txt', 'w')
+        trace = open(f'{outs_dir}/trace.txt', 'w')
         trace.write(trace_data)
     s.close()
 

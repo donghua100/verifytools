@@ -6,6 +6,8 @@ import json
 import argparse
 import re
 import time
+
+import tomlkit
 import Proc
 from toolpath import AVRPATH,PONO
 
@@ -23,49 +25,66 @@ class TaskConfig():
         self.engine_opt = engine_opt_default
         self.task_timeout = None
         self.top = None
-    def parser_config(self,configfile:str,workdir:str):
-        with open(configfile,'r') as f:
-            lines = f.readlines()
-            config_dict = {}
-            for line in lines:
-                line = line.strip()
-                if line == '':continue
-                lhs,rhs = line.split(':')
-                lhs = lhs.strip()
-                rhs = rhs.strip()
-                if lhs == 'options':
-                    lhs = 'engine_opt'
-                if lhs == 'mode':
-                    match = re.match(r'(bmc)\s*(\d+)',rhs)
-                    if match:
-                        rhs = match.group(1)
-                        depth = int(match.group(2))
-                        config_dict['depth'] = depth
-                if lhs == 'timeout':
-                    config_dict['timeout'] = int(rhs)
-                if lhs == 'solver':
-                    config_dict['solver'] = rhs
-                # if lhs == 'top':
-                #     config_dict['top'] = rhs
-                config_dict[lhs] = rhs
-            with open(f"{workdir}/config.json","w") as fjson:
-                json.dump(config_dict,fjson,indent=4)
-        with open(f"{workdir}/config.json",'r') as f:
-            config = json.load(f)
-            self.mode = config['mode']
-            if self.mode == 'bmc':
-                self.depth = config['depth']
-            self.engine = config['engine']
-            self.engine_opt = config['engine_opt']
-            self.task_timeout = int(config['timeout']) if int(config['timeout']) > 0 else None
-            self.file_type = config['filetype']
-            self.solver = config['solver']
-            # self.top = config['top']
+        self.file_type = 'btor'
+    def parser_config(self, configfile:str, taskname:str):
+        cfg = tomlkit.parse(open(configfile).read())
+        self.mode           = cfg[taskname]['mode']
+        self.engine         = cfg[taskname]['engine']
+        self.solver         = cfg[taskname]['solver']
+        if 'timeout' in cfg:
+            self.task_timeout   = int(cfg['timeout'])
+        self.file_type      = cfg['file']['type']
+        if self.mode == 'bmc':
+            self.depth      = cfg[taskname]['depth']
+        if 'options' in cfg:
+            self.engine_opt     = cfg['options']
+        if cfg['file']['type'] == 'sv':
+            self.top = cfg['file']['top']
+
+    # def parser_config0(self,configfile:str,workdir:str):
+    #     with open(configfile,'r') as f:
+    #         lines = f.readlines()
+    #         config_dict = {}
+    #         for line in lines:
+    #             line = line.strip()
+    #             if line == '':continue
+    #             lhs,rhs = line.split(':')
+    #             lhs = lhs.strip()
+    #             rhs = rhs.strip()
+    #             if lhs == 'options':
+    #                 lhs = 'engine_opt'
+    #             if lhs == 'mode':
+    #                 match = re.match(r'(bmc)\s*(\d+)',rhs)
+    #                 if match:
+    #                     rhs = match.group(1)
+    #                     depth = int(match.group(2))
+    #                     config_dict['depth'] = depth
+    #             if lhs == 'timeout':
+    #                 config_dict['timeout'] = int(rhs)
+    #             if lhs == 'solver':
+    #                 config_dict['solver'] = rhs
+    #             # if lhs == 'top':
+    #             #     config_dict['top'] = rhs
+    #             config_dict[lhs] = rhs
+    #         with open(f"{workdir}/config.json","w") as fjson:
+    #             json.dump(config_dict,fjson,indent=4)
+    #     with open(f"{workdir}/config.json",'r') as f:
+    #         config = json.load(f)
+    #         self.mode = config['mode']
+    #         if self.mode == 'bmc':
+    #             self.depth = config['depth']
+    #         self.engine = config['engine']
+    #         self.engine_opt = config['engine_opt']
+    #         self.task_timeout = int(config['timeout']) if int(config['timeout']) > 0 else None
+    #         self.file_type = config['filetype']
+    #         self.solver = config['solver']
+    #         # self.top = config['top']
 
 class VerifTask(TaskConfig):
-    def __init__(self,configfile:str,workdir:str,earlylogs:list,logfile=None):
+    def __init__(self,configfile:str,workdir:str,taskname:str,earlylogs:list,logfile=None):
         super().__init__()
-        self.parser_config(configfile,workdir)
+        self.taskname = taskname
+        self.parser_config(configfile,taskname)
         self.workdir = workdir
         self.exe_path = {
                 'yosys':os.getenv('YOSYS','yosys'),
@@ -213,13 +232,14 @@ class VerifTask(TaskConfig):
         tot_time = int(time.monotonic()-self.task_start_time)
         res = open(f'{self.workdir}/results.txt','w')
         for f in [res,sys.stdout]:
+            print(f'task name: {self.taskname}',file=f,flush=True)
             print(f'verify file:{self.filename}.{self.file_type}',file=f,flush=True)
             print(f'task using time: {tot_time} sec',file=f,flush=True)
             print(f'task return status: {self.status}',file=f,flush=True)
             if self.mode == 'bmc':
                 print(f'bmc steps: {self.bmc_steps}',file=f,flush=True)
-            print(f'subprocess log file in {self.logdir}',file=f,flush=True)
-            print(f'trace file in {self.tracedir}',file=f,flush=True)
+            # print(f'subprocess log file in {self.logdir}',file=f,flush=True)
+            # print(f'trace file in {self.tracedir}',file=f,flush=True)
         res.close()
 
 header='''
@@ -232,25 +252,36 @@ def log(workdir:str,msg:str):
     print(logmsgs[-1])
 
 
+# tasks = {}
+# taskRun = []
+# task_idx = 0
+# def run_new_task(workdir:str,cfg:str,idx:int):
+#     task = VerifTask(cfg,workdir,logmsgs)
+#     tasks[idx] = task
+#     taskRun.append(idx)
+#
+# def check_task(idx:int):
+#     task = tasks[idx]
+#     if task.status is not None:
+
+
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(description=header)
+    p = argparse.ArgumentParser()
     p.add_argument('configfile',help='config file',type=str)
     p.add_argument('-s','--srcfile',help='the file to verify',type=str,required=True)
     p.add_argument('-d','--workdir',help='set workdir',metavar='workdir',type=str)
     p.add_argument('-f','--force',help='overwite the existsed path',action='store_true')
-    p.add_argument('-t','--top',help='specific the top module for sv file',type=str,default=None)
+    p.add_argument('-t','--taskname',help='specific the task name',type=str,required=True)
     arg = p.parse_args()
 
     configfile = arg.configfile
     workdir = arg.workdir
     force = arg.force
+    taskname = arg.taskname
     taskconfig = TaskConfig()
     if workdir == None:
-        workdir = os.path.basename(configfile)
-        workdir = os.path.splitext(workdir)[0]
-        workdir = f'{os.path.abspath(os.curdir)}/{workdir}'
-
+        workdir = f'{os.path.abspath(os.curdir)}/{taskname}'
     if os.path.exists(workdir):
         if not force:
             print(f"{workdir} already exists,please choose another folder,or use -f overwite the folder")
@@ -262,13 +293,10 @@ if __name__ == '__main__':
 
     os.mkdir(workdir)
 
-    task = VerifTask(configfile,workdir,logmsgs)
-    if task.file_type == 'sv' and arg.top is None:
-        task.log('ERROR:sv file type must specific top module')
+    task = VerifTask(configfile,workdir,taskname,logmsgs)
     srcfile = open(arg.srcfile,'r')
     srcname = os.path.basename(arg.srcfile)
     task.filename = os.path.splitext(srcname)[0]
-    task.top = arg.top
     destfile = open(f"{task.srcdir}/{task.filename}.{task.file_type}","w")
     destfile.write(srcfile.read())
     srcfile.close()

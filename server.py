@@ -4,6 +4,7 @@ import socket
 import subprocess as sp
 import os
 import time
+import tomlkit
 
 from msg import sendmsg, recvmsg
 from setting import HOST, PORT
@@ -15,25 +16,23 @@ def server():
     s.bind((HOST,PORT))
     
     s.listen()
+    conn_cnt = 0
     while True:
         conn,addr = s.accept()
-        conn_cnt = 0
 
-        # get config file
-        # time.sleep(5)
         config_data = recvmsg(conn)
         verify_data = recvmsg(conn)
-        srcname = recvmsg(conn)
-        top = recvmsg(conn)
-        if top == 'NO TOP':
-            top = None
+
+        cfg = tomlkit.parse(config_data)
+        tasks = cfg['tasks']
+        srcname = cfg['file']['name']
         tmp_dir = 'tmp'
         if not os.path.exists(tmp_dir):
             os.mkdir(tmp_dir)
         tmp_conn_dir = f'{tmp_dir}/{conn_cnt}'
         if not os.path.exists(tmp_conn_dir):
             os.mkdir(tmp_conn_dir)
-        config_name = f'{tmp_conn_dir}/{srcname}.cfg'
+        config_name = f'{tmp_conn_dir}/{srcname}.yaml'
         with open(config_name, 'w') as config_file:
             config_file.write(config_data)
         verify_name = f'{tmp_conn_dir}/{srcname}'
@@ -43,26 +42,23 @@ def server():
         if not os.path.exists(outs_dir):
             os.mkdir(outs_dir)
         cur_dir = os.path.abspath(os.curdir)
-        work_dir = f'{cur_dir}/{outs_dir}/task{conn_cnt}'
-        if top == None:
-            cmd = f"python3 core/task.py -s {verify_name} -d {work_dir} {config_name} -f"
-        else:
-            cmd = f"python3 core/task.py -s {verify_name} -t {top} -d {work_dir} {config_name} -f"
+        work_dir = f'{cur_dir}/{outs_dir}/conn{conn_cnt}'
+        cmd = f"python3 core/mutitask.py {config_name} -s {verify_name} -w {work_dir} -f"
         proc = sp.Popen(['sh', '-c', cmd])
-        print(cmd)
         while proc.poll() is None:
             pass
         res_data = open(f'{work_dir}/results.txt').read()
         sendmsg(res_data, conn)
         if len(re.findall(r'task return status: SAFE',res_data))!=0:
-            inv_data = open(f'{work_dir}/trace/inv.txt').read()
+            inv_data = open(f'{work_dir}/trace.txt').read()
             sendmsg(inv_data,conn)
         elif len(re.findall(r'task return status: UNSAFE',res_data))!=0:
-            witness_data = open(f'{work_dir}/trace/witness.txt').read()
+            witness_data = open(f'{work_dir}/trace.txt').read()
             sendmsg(witness_data,conn)
         else:
             sendmsg('NO TRACE',conn)
         conn.close()
+        conn_cnt += 1
         shutil.rmtree(tmp_conn_dir,ignore_errors=True)
 
 if __name__ == '__main__':
