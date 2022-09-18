@@ -1,6 +1,6 @@
 #  CSMC: Distributed Verified Tool Based On Model Checking
 CSMC is a tool working with Client/Server architecture for Hardware Model Checking.Once environment configuration has been done on server,one can use it's service to check hardwave design conveniently.
-#How  to Build it
+# How  to Build it
 ## Required Dependence on Server
 **Yosys, ABC, PONO and AVR**
 
