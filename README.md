@@ -60,4 +60,4 @@ port = "2678"
 ```
 An example can be find in test/config.toml
 # CSMC Tool Flow
-![CSMC](img/CSMC.jpg "CSMC")
+![CSMC](img/CSMC-Flow.png "CSMC")
