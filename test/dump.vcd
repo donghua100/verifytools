@@ -1,0 +1,30 @@
+$date
+Thursday 2022/09/15  11:53:19
+$end
+$version PONO $end
+$timescale 1 ns $end
+$var reg 32 v3 cnt[31:0] $end
+$var reg 1 v1 state10 $end
+$var reg 1 v2 state8 $end
+$var wire 1 v0 assert(property0) $end
+$var wire 1 v4 clk $end
+$enddefinitions $end
+#0
+b1 v0
+b0 v1
+b0 v2
+b00000000000000000000000000000000 v3
+b0 v4
+#1
+b1 v1
+b1 v2
+b00000000000000000000000000000001 v3
+#2
+b00000000000000000000000000000010 v3
+#3
+b00000000000000000000000000000011 v3
+#4
+b0 v0
+b0 v2
+b00000000000000000000000000000000 v3
+#5
