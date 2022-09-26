@@ -23,8 +23,7 @@ def task(conn, tmp_dir, outs_dir, conn_cnt):
     verify_name = f'{tmp_conn_dir}/{srcname}'
     with open(verify_name, 'w') as verify_file:
         verify_file.write(verify_data)
-    cur_dir = os.path.abspath(os.curdir)
-    work_dir = f'{cur_dir}/{outs_dir}/conn{conn_cnt}'
+    work_dir = f'{outs_dir}/conn{conn_cnt}'
     cmd = f"python3 core/mutitask.py {config_name} -s {verify_name} -w {work_dir} -f"
     proc = sp.Popen(['sh', '-c', cmd])
     while proc.poll() is None:
@@ -44,15 +43,14 @@ def task(conn, tmp_dir, outs_dir, conn_cnt):
 
 
 def server(ip, port):
+    global outs_dir
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     s.bind((ip, port))
     s.listen()
     p = Pool(os.cpu_count())
     conn_cnt = 0
-    tmp_dir = 'tmp'
     if not os.path.exists(tmp_dir):
         os.mkdir(tmp_dir)
-    outs_dir = 'tasks'
     if not os.path.exists(outs_dir):
         os.mkdir(outs_dir)
     while True:
@@ -62,9 +60,13 @@ def server(ip, port):
 
 
 if __name__ == '__main__':
+    cur_dir = os.path.abspath(os.curdir)
+    outs_dir = f"{cur_dir}/tasks"
+    tmp_dir = f'{cur_dir}/tmp'
     p = argparse.ArgumentParser()
     p.add_argument('-ip', type=str, required=True)
     p.add_argument('-p', '--port', type=int, required=True)
+    p.add_argument('-o', '--output', type=str, help='output dir', default=outs_dir)
     args = p.parse_args()
     ip = args.ip
     port = args.port

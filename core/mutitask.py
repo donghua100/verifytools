@@ -62,16 +62,18 @@ if __name__ == '__main__':
                 dst_trace = f"{workdir}/trace.txt"
                 if len(re.findall(r'task return status: SAFE', fstr))!=0:
                     shutil.copy(src_trace_inv,dst_trace)
-                    for x in procIdx:
-                        proc = taskRun[x]
-                        procIdx.remove(x)
-                        proc.kill()
+                    for x in taskRun.keys():
+                        if x in procIdx:
+                            proc = taskRun[x]
+                            procIdx.remove(x)
+                            proc.kill()
                 elif len(re.findall(r'task return status: UNSAFE', fstr))!=0:
                     shutil.copy(src_trace_wit,dst_trace)
-                    for x in procIdx:
-                        proc = taskRun[x]
-                        procIdx.remove(x)
-                        proc.kill()
+                    for x in taskRun.keys():
+                        if x in procIdx:
+                            proc = taskRun[x]
+                            procIdx.remove(x)
+                            proc.kill()
 
 
 

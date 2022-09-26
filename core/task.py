@@ -9,7 +9,7 @@ import time
 
 import tomlkit
 import Proc
-from toolpath import AVRPATH,PONO
+from toolpath import AVRPATH,PONO,YOSYS
 
 class TaskConfig():
     def __init__(self):
@@ -87,7 +87,7 @@ class VerifTask(TaskConfig):
         self.parser_config(configfile,taskname)
         self.workdir = workdir
         self.exe_path = {
-                'yosys':os.getenv('YOSYS','yosys'),
+                'yosys':os.getenv('YOSYS',YOSYS),
                 'pono':os.getenv('PONO',PONO),
                 'avr':os.getenv('AVR',AVRPATH),
                 }
