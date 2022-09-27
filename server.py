@@ -38,6 +38,11 @@ def task(conn, tmp_dir, outs_dir, conn_cnt):
         sendmsg(witness_data,conn)
     else:
         sendmsg('NO TRACE',conn)
+    if os.path.exists(f'{work_dir}/dump.vcd'):
+        vcd_data = open(f'{work_dir}/dump.vcd').read()
+        sendmsg(vcd_data,conn)
+    else:
+        sendmsg('NO VCD', conn)
     conn.close()
     shutil.rmtree(tmp_conn_dir,ignore_errors=True)
 

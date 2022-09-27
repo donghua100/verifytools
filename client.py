@@ -52,6 +52,10 @@ def client():
         # print(trace_data)
         trace = open(f'{outs_dir}/trace.txt', 'w')
         trace.write(trace_data)
+    vcd_data = recvmsg(s)
+    if vcd_data != 'NO VCD':
+        vcd = open(f'{outs_dir}/dump.vcd', 'w')
+        vcd.write(vcd_data)
     s.close()
 
 
