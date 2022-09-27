@@ -70,5 +70,6 @@ if __name__ == '__main__':
     args = p.parse_args()
     ip = args.ip
     port = args.port
+    outs_dir = args.output
     server(ip,port)
 

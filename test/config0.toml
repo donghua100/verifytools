@@ -9,8 +9,8 @@ engine = "avr"
 mode = "prove"
 solver = "msat"
 [file]
-name = "mycounter-false.btor"
+name = "test/mycounter-false.btor"
 type = "btor"
 [server]
-ip = "127.0.0.1"
+ip = "192.168.1.34"
 port = "2678"
