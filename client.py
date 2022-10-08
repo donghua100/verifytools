@@ -4,6 +4,7 @@ import socket
 import argparse
 import sys
 import shutil
+import time
 from tomlkit import dumps, parse
 from msg import sendmsg,recvmsg
 from multiprocessing import Pool
@@ -38,6 +39,8 @@ def client(ip, port, cfg,taskname, srcfile, outs_dir):
     s.connect((ip, port))
 
     
+    log = logging.getLogger(taskname)
+    log.addHandler(logging.StreamHandler())
     log.setLevel(logging.INFO)
     log.info('upload config file')
     sendmsg(dumps(cfg), s)
@@ -56,7 +59,7 @@ def client(ip, port, cfg,taskname, srcfile, outs_dir):
     result = open(f'{outs_dir}/results.txt','w')
     result.write(res_data)
     result.close()
-    print(res_data)
+    log.warning(res_data)
 
     trace_data = recvmsg(s)
     if trace_data != 'NO TRACE':
@@ -79,17 +82,17 @@ def muticlient():
         ip      = cfg[task]['ip']
         port    = int(cfg[task]['port'])
         srcfile = cfg['file']['name']
-        # p.apply_async(client,args=(ip,port,cfg,task,srcname,task_out_dir))
         srcname = os.path.basename(srcfile)
         srcname = os.path.splitext(srcname)[0]
         task_out_dir = f"{outs_dir}/{task}"
         new_cfg = copy.deepcopy(cfg)
         new_cfg['file']['name'] = srcname
-        client(ip, port, new_cfg, task, srcfile, task_out_dir)
+        p.apply_async(client,args=(ip,port,new_cfg,task,srcfile,task_out_dir,))
+        time.sleep(0.01)
+        # client(ip, port, new_cfg, task, srcfile, task_out_dir)
         
 
 if __name__ == '__main__':
-    log = logging.getLogger(__name__)
     muticlient()
     #parser_cmd()
 
