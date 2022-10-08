@@ -11,36 +11,46 @@ from msg import sendmsg, recvmsg
 def task(conn, tmp_dir, outs_dir, conn_cnt):
     config_data = recvmsg(conn)
     verify_data = recvmsg(conn)
+    taskname    = recvmsg(conn)
 
     cfg = tomlkit.parse(config_data)
     srcname = cfg['file']['name']
     tmp_conn_dir = f'{tmp_dir}/{conn_cnt}'
     if not os.path.exists(tmp_conn_dir):
         os.mkdir(tmp_conn_dir)
-    config_name = f'{tmp_conn_dir}/{srcname}.yaml'
+    config_name = f'{tmp_conn_dir}/{srcname}.toml'
     with open(config_name, 'w') as config_file:
         config_file.write(config_data)
     verify_name = f'{tmp_conn_dir}/{srcname}'
     with open(verify_name, 'w') as verify_file:
         verify_file.write(verify_data)
     work_dir = f'{outs_dir}/conn{conn_cnt}'
-    cmd = f"python3 core/mutitask.py {config_name} -s {verify_name} -w {work_dir} -f"
+    if not os.path.exists(work_dir):
+        os.mkdir(work_dir)
+    work_dir = f'{work_dir}/{taskname}'
+    cmd = f"python3 core/task.py {config_name} -s {verify_name} -t {taskname} -d {work_dir} -f"
     proc = sp.Popen(['sh', '-c', cmd])
     while proc.poll() is None:
         pass
-    res_data = open(f'{work_dir}/results.txt').read()
+    src_res = f"{work_dir}/results.txt"
+    src_trace_inv = f"{work_dir}/trace/inv.txt"
+    src_trace_wit = f"{work_dir}/trace/witness.txt"
+    src_trace_vcd = f"{work_dir}/trace/dump.vcd"
+
+    res_data = open(src_res).read() 
+
     sendmsg(res_data, conn)
-    if len(re.findall(r'task return status: SAFE',res_data))!=0:
-        inv_data = open(f'{work_dir}/trace.txt').read()
-        sendmsg(inv_data,conn)
-    elif len(re.findall(r'task return status: UNSAFE',res_data))!=0:
-        witness_data = open(f'{work_dir}/trace.txt').read()
-        sendmsg(witness_data,conn)
+    if len(re.findall(r'task return status: SAFE', res_data))!=0:
+        trace_inv_data = open(src_trace_inv).read()
+        sendmsg(trace_inv_data, conn)
+    elif len(re.findall(r'task return status: UNSAFE', res_data))!=0:
+        trace_wit_data = open(src_trace_wit).read()
+        sendmsg(trace_wit_data, conn)
     else:
-        sendmsg('NO TRACE',conn)
-    if os.path.exists(f'{work_dir}/dump.vcd'):
-        vcd_data = open(f'{work_dir}/dump.vcd').read()
-        sendmsg(vcd_data,conn)
+        sendmsg('NO TRACE', conn)
+    if os.path.exists(src_trace_vcd):
+        vcd_data = open(src_trace_vcd).read()
+        sendmsg(vcd_data, conn)
     else:
         sendmsg('NO VCD', conn)
     conn.close()

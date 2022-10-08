@@ -1,16 +1,21 @@
 tasks = ["foo","bar"]
+timeout = 3600
 [foo]
-engine = "avr"
+engine = "pono"
 mode = "bmc"
 depth = 100
 solver = "btor"
+ip = "127.0.0.1"
+port = "2678"
 [bar]
 engine = "avr"
 mode = "prove"
 solver = "msat"
-[file]
-name = "test/mycounter-false.btor"
-type = "btor"
-[server]
 ip = "127.0.0.1"
 port = "2678"
+[file]
+name = "test/mycounter-false.v"
+# name = "/home/guishuo/Downloads/memory.sv"
+type = "sv"
+top = "mycounter"
+# top = "TOP"

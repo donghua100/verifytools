@@ -1,4 +1,4 @@
+OSS_CAD='/home/guishuo/mc/mctools/oss-cad-suite/bin'
 AVRPATH='/home/guishuo/mc/mctools/avrtools'
-PONOPATH='/home/guishuo/mc/mctools/pono'
-PONO=f'{PONOPATH}/build/pono'
-YOSYS=f'yosys'
+PONO=f'{OSS_CAD}/pono'
+YOSYS=f'{OSS_CAD}/yosys'
