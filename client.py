@@ -1,15 +1,14 @@
 import os
 import copy
-import socket
 import argparse
 import sys
 import shutil
 import time
-from tomlkit import dumps, parse
-from msg import sendmsg,recvmsg
-from multiprocessing import Pool
+from tomlkit import parse,dumps
+import socket
+from msg import sendmsg, recvmsg
 import logging
-
+from multiprocessing import Process
 descr = 'run verify tools on a server'
 
 def parser_cmd():
@@ -33,12 +32,11 @@ def parser_cmd():
             sys.exit(-1)
     return args.config, workdir
 
-
 def client(ip, port, cfg,taskname, srcfile, outs_dir):
+    print(f"pid : {os.getpid()}")
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((ip, port))
 
-    
     log = logging.getLogger(taskname)
     log.addHandler(logging.StreamHandler())
     log.setLevel(logging.INFO)
@@ -52,8 +50,9 @@ def client(ip, port, cfg,taskname, srcfile, outs_dir):
 
     log.info('task run: {}'.format(taskname))
     sendmsg(taskname, s)
-
+    # print("aaaaa")
     res_data = recvmsg(s)
+    # print("bbbbb")
     if not os.path.exists(outs_dir):
         os.mkdir(outs_dir)
     result = open(f'{outs_dir}/results.txt','w')
@@ -77,7 +76,7 @@ def muticlient():
     cfg_path,outs_dir    = parser_cmd()
     cfg         = parse(open(cfg_path).read())
     tasks       = cfg['tasks']
-    p = Pool(128)
+    procs = []
     for task in tasks:
         ip      = cfg[task]['ip']
         port    = int(cfg[task]['port'])
@@ -87,8 +86,11 @@ def muticlient():
         task_out_dir = f"{outs_dir}/{task}"
         new_cfg = copy.deepcopy(cfg)
         new_cfg['file']['name'] = srcname
-        p.apply_async(client,args=(ip,port,new_cfg,task,srcfile,task_out_dir,))
-        time.sleep(0.01)
+        p = Process(target=client, args=(ip,port,new_cfg,task,srcfile,task_out_dir,))
+        procs.append(p)
+        p.start()
+    for p in procs:
+        p.join()
         # client(ip, port, new_cfg, task, srcfile, task_out_dir)
         
 

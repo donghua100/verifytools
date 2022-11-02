@@ -7,6 +7,7 @@ import argparse
 import tomlkit
 from multiprocessing import Pool
 from msg import sendmsg, recvmsg
+import logging
 
 def task(conn, tmp_dir, outs_dir, conn_cnt):
     config_data = recvmsg(conn)
@@ -38,8 +39,13 @@ def task(conn, tmp_dir, outs_dir, conn_cnt):
     src_trace_vcd = f"{work_dir}/trace/dump.vcd"
 
     res_data = open(src_res).read() 
-
+    log = logging.getLogger(str(conn_cnt))
+    log.setLevel(logging.INFO)
+    log.info("send results")
+    # print("aaaaaaaaaaaaaaaa")
     sendmsg(res_data, conn)
+    # print("bbbbbbbbbbbbbbb")
+    log.info("send trace")
     if len(re.findall(r'task return status: SAFE', res_data))!=0:
         trace_inv_data = open(src_trace_inv).read()
         sendmsg(trace_inv_data, conn)
