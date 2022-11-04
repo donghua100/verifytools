@@ -79,34 +79,28 @@ always @(posedge clk) begin
 end
 
 // ast1_pass:
-// always @(posedge clk) begin
-//     if (rst_n && in_rd && (in_rd_addr == random_addr)) begin
-//         flag <= 1'b1;
-//     end else begin
-//         flag <= 1'b0;
-//     end
-//     if (flag && rst_n) begin
-//         assert(random_data == out_data);
-//     end
-// 
-//     // assert(!(flag && rst_n));
-//     
-// //    if (rst_n) begin
-// //        assert(random_data == mem[random_addr]);
-// //    end
-// end
-
-// ast1_fail
 always @(posedge clk) begin
     if (rst_n && in_rd && (in_rd_addr == random_addr)) begin
-        flag_fail <= 1'b1;
+        flag <= 1'b1;
     end else begin
-        flag_fail <= 1'b0;
+        flag <= 1'b0;
     end
-    if (flag_fail && rst_n) begin
-        assert(random_data_fail == out_data);
+    if (flag && rst_n) begin
+        assert(random_data == out_data);
     end
 end
+
+// ast1_fail
+// always @(posedge clk) begin
+//     if (rst_n && in_rd && (in_rd_addr == random_addr)) begin
+//         flag_fail <= 1'b1;
+//     end else begin
+//         flag_fail <= 1'b0;
+//     end
+//     if (flag && rst_n) begin
+//         assert(random_data_fail == out_data);
+//     end
+// end
 
 // ast1_pass: assert property(@(posedge clk) in_rd && (in_rd_addr == random_addr) |=> out_data == random_data);
 // ast1_fail: assert property(@(posedge clk) in_rd && (in_rd_addr == random_addr) |=> out_data == random_data_fail);

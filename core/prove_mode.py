@@ -8,6 +8,9 @@ def run(task):
     elif task.engine == 'avrpr':
         import engine_avrpr
         engine_avrpr.run(task)
+    elif task.engine == 'abc':
+        import engine_abc
+        engine_abc.run(task)
     else:
         assert False,f'not support engine:{task.engine}'
 

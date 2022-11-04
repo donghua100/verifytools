@@ -9,7 +9,7 @@ import time
 
 import tomlkit
 import Proc
-from toolpath import AVRPATH,PONO,YOSYS
+from toolpath import AVRPATH,PONO,YOSYS,YOSYS_ABC
 
 class TaskConfig():
     def __init__(self):
@@ -90,6 +90,7 @@ class VerifTask(TaskConfig):
                 'yosys':os.getenv('YOSYS',YOSYS),
                 'pono':os.getenv('PONO',PONO),
                 'avr':os.getenv('AVR',AVRPATH),
+                'yosys_abc':os.getenv('YOSYS_ABC',YOSYS_ABC),
                 }
         self.avr_path = ''
         self.designdir = self.workdir + '/' + 'design'
