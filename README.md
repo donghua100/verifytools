@@ -3,7 +3,10 @@ CSMC is a tool working with Client/Server architecture for Hardware Model Checki
 # How  to Build it
 ## Required Dependence on Server
 **Yosys, ABC, PONO and AVR**
+The easiest way to use our tool is to install the binary yosys, abc, Pono, which can be found at [oss-cad-suit-build](https://github.com/YosysHQ/oss-cad-suite-build). Just download and install it.
 
+Or:
+You can also build them manually as follows.
 -  Building Yosys and  ABC. Note that this will install Yosys and ABC(as yosys-abc):
 <https://yosyshq.net/yosys/>
 ```
@@ -34,30 +37,29 @@ Just python3 environment.
 `pip install tomlkit`
 # Use it
 ## On server
- **NOTE: First to use. Modify the core/toolpath.py code,change the variable AVRPATH and PONOPATH to the real path where the avr and pono project you have download,make sure you have build them sucessfully.**
+ **NOTE: First to use. Modify the core/toolpath.py code,change the variable OSS_CAD, AVRPATH, YOSYS,YOSYS_ABC and PONO to the real path where the avr and pono project you have download,make sure you have build them sucessfully.**
 Now you can run `python3 server.py -ip [you ip address] -p [port]`,the verify service will start,and ready to work.Tell you cilent the ip and port to enjoy the service.
 ## On client
 Wite the config file.Don't worry the config is easy to write.We use [toml](https://toml.io/en/) to config verify task.
 - First define tasks. E.g. `tasks = ["foo","bar"]` define two tasks named foo and bar. `
-- Second for each task you shoul define the verify engine you want to use,the mode(bmc or prove),the solver and the other options if have. For example:
+- Second for each task you shoul define the verify engine you want to use,the mode(bmc or prove),the solver and the other options if have. Then, server section,the ip and port should be provided.For example:
 ```
 [foo]
 engine = "avr" # the verify engine
 mode = "bmc" # the mode bmc aims to find bug
 depth = 100    # the bmc's bound
 solver = "btor"  # use boolector as solver
+ip = "127.0.0.1"
+port = "2678"
 [bar]
 engine = "avr"
 mode = "prove" # prove mode primarily prove circuit.
 solver = "msat"
-```
-- Then the file section, just put the file name you want to verify and the file type. If the file type is system verilog,top module shoud be declared with key word top.
-- Last, server section,the ip and port should be provided.
-```
-[server]
-ip = "127.0.0.1"
+ip = "192.168.1.34"
 port = "2678"
 ```
+- Then the file section, just put the file name you want to verify and the file type. If the file type is system verilog,top module shoud be declared with key word top.
+
 An example can be find in test/config.toml
 # CSMC Tool Flow
 ![CSMC](img/CSMC-Flow.png "CSMC")
