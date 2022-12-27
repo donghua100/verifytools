@@ -1,5 +1,6 @@
-OSS_CAD='/home/guishuo/mc/mctools/oss-cad-suite/bin'
-AVRPATH='/home/guishuo/mc/mctools/avrtools'
+OSS_CAD='/home/guishuo/linux/mc/mctools/oss-cad-suite/bin'
+AVRPATH='/home/guishuo/linux/mc/mctools/avrtools'
 PONO=f'{OSS_CAD}/pono'
 YOSYS=f'{OSS_CAD}/yosys'
 YOSYS_ABC=f'{OSS_CAD}/yosys-abc'
+CHISEL2BTOR=f'/home/guishuo/linux/chisel2btor/ChiselFV'

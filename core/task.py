@@ -6,10 +6,12 @@ import json
 import argparse
 import re
 import time
+import subprocess as sp
+import tempfile
 
 import tomlkit
 import Proc
-from toolpath import AVRPATH,PONO,YOSYS,YOSYS_ABC
+from toolpath import AVRPATH,PONO,YOSYS,YOSYS_ABC,CHISEL2BTOR
 
 class TaskConfig():
     def __init__(self):
@@ -26,6 +28,7 @@ class TaskConfig():
         self.task_timeout = None
         self.top = None
         self.file_type = 'btor'
+        self.args = ''
     def parser_config(self, configfile:str, taskname:str):
         cfg = tomlkit.parse(open(configfile).read())
         self.mode           = cfg[taskname]['mode']
@@ -40,6 +43,10 @@ class TaskConfig():
             self.engine_opt     = cfg['options']
         if cfg['file']['type'] == 'sv':
             self.top = cfg['file']['top']
+        if cfg['file']['type'] == 'scala':
+            self.top = cfg['file']['top']
+        if cfg['file']['type'] == 'scala':
+            self.args = cfg['file']['args']
 
     # def parser_config0(self,configfile:str,workdir:str):
     #     with open(configfile,'r') as f:
@@ -92,6 +99,7 @@ class VerifTask(TaskConfig):
                 'avr':os.getenv('AVR',AVRPATH),
                 'yosys_abc':os.getenv('YOSYS_ABC',YOSYS_ABC),
                 }
+        self.chisel2btorpath = CHISEL2BTOR
         self.avr_path = ''
         self.designdir = self.workdir + '/' + 'design'
         os.mkdir(self.designdir)
@@ -153,6 +161,12 @@ class VerifTask(TaskConfig):
                 return 
             self.make_btor()
             self.make_aig()
+        elif self.file_type == 'scala':
+            if self.top is None:
+                self.log('ERROR:scala file type must specific top module')
+                return
+            self.chisel2btor()
+            
         else:
             shutil.copy(f"{self.srcdir}/{self.filename}.{self.file_type}",f"{self.designdir}/{self.filename}.{self.file_type}")
         self.avr_path = self.exe_path['avr']
@@ -196,6 +210,51 @@ class VerifTask(TaskConfig):
         proc = Proc.Proc(self,"make aig",f"{self.exe_path['yosys']} {self.designdir}/{self.filename}_aig.ys",'make_aig.txt')
         self.deps.append(proc)
         return proc
+
+    def chisel2btor2(self):
+        self.log(f"generate btor from chisel")
+        src_chisel = f"{self.srcdir}/{self.filename}.{self.file_type}"
+        out_btor = f"{self.designdir}/{self.filename}.btor"
+        proc = Proc.Proc(self, "convert chisel to btor", f"python3 {self.chisel2btorpath} {src_chisel} {self.top} {out_btor}", 'chisel2btor.txt')
+        self.deps.append(proc)
+        return proc
+
+    def chisel2btor(self):
+        chisel_file = f"{self.srcdir}/{self.filename}.{self.file_type}"
+        out_btor = f"{self.designdir}/{self.filename}.btor"
+
+        instance = self.top
+        args = self.args
+        tmp_dir = tempfile.TemporaryDirectory()
+        chisel_tmp_dir = tmp_dir.name
+        # print(tmp_dir)
+        # print(chisel_tmp_dir)
+        shutil.copytree(CHISEL2BTOR,chisel_tmp_dir,dirs_exist_ok=True)
+        chisel_dir = chisel_tmp_dir
+        # print(chisel_dir)
+        shutil.copy(chisel_file, chisel_dir + "/src/main/scala")
+        script = f"""import chiselFv._
+
+object Btor2Generator extends App {{
+    Check.generateBtor(() => new {instance}({args}))
+}}
+"""
+        with open(chisel_dir + "/src/main/scala/Btor2Generator.scala", 'w') as f:
+            f.write(script)
+        # run `sbt run Btor2Generator` in chisel_dir
+        # You need to make sure there is only one Main in the project (that is, the Object that inherits from the App)
+        proc = Proc.Proc(self, "convert chisel to btor", f"cd {chisel_dir}; sbt run")
+        proc.run();
+        # sp.run(["sbt", "run"], cwd=chisel_dir)
+        
+        # copy the generated btor2 file(self.chisel_dir + self.instance + _ + btor + _ + gen + self.instance + .btor2) to the current directory
+        shutil.copy(f"{chisel_dir}/{instance}_btor_gen/{instance}.btor2", out_btor)
+        # remove src/main/scala/Btor2Generator.scala and src/main/scala/<chisel_file>
+        os.remove(chisel_dir + "/src/main/scala/Btor2Generator.scala")
+        os.remove(chisel_dir + "/src/main/scala/" + chisel_file.split("/")[-1])
+        shutil.rmtree(f"{chisel_dir}/{instance}_btor_gen", ignore_errors=True)
+        
+        return 
 
     def make_btor(self):
         self.log(f"generate yosys scripts in {self.designdir}/{self.filename}_btor.ys to make btor")
