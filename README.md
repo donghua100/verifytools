@@ -1,6 +1,19 @@
 #  CSMC: Distributed Verified Tool Based On Model Checking
 CSMC is a tool working with Client/Server architecture for Hardware Model Checking.Once environment configuration has been done on server,one can use it's service to check hardwave design conveniently.
 # How  to Build it
+## We recommend use our tool with docker. 
+Follw the [tutorial](https://docs.docker.com/desktop/install/windows-install/) install on Windows. If you use linux , follow this [tutorial](https://docs.docker.com/desktop/install/linux-install/).
+1. pull the image with docker command:   **docker pull dianmei/csmc:v1**
+2. create a containter: **docker run -itd --name="csmc" -p 2678:2678  [image ID]**
+3.  run the containter: ** docker exec -it csmc /bin/bash**
+4. use the tool: 
+	1) cd the csmc directory:  **cd /root/csmc/**
+	2) read the uasge: **python3 server.py -h**
+	3) start the service: **python3 server.py -ip 0.0.0.0 -p 2678 -o /root/data/ & **
+5.  use a client to connect the server.
+We use local client.  Modify the config file in the test diectory. Use config0.toml. Change the ip to localhost. 
+Run the client:  **python3 client.py test/config0.toml**
+# Or Build it manually.
 ## Required Dependence on Server
 **Yosys, ABC, PONO and AVR**
 The easiest way to use our tool is to install the binary yosys, abc, Pono, which can be found at [oss-cad-suit-build](https://github.com/YosysHQ/oss-cad-suite-build). Just download and install it.
