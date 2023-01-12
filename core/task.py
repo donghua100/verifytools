@@ -1,4 +1,5 @@
 import os
+import sys
 import signal
 import sys
 import shutil
@@ -10,6 +11,7 @@ import subprocess as sp
 import tempfile
 
 import tomlkit
+sys.path.append('core')
 import Proc
 from toolpath import AVRPATH,PONO,YOSYS,YOSYS_ABC,CHISEL2BTOR
 
@@ -80,25 +82,26 @@ class TaskConfig():
     #         self.mode = config['mode']
     #         if self.mode == 'bmc':
     #             self.depth = config['depth']
-    #         self.engine = config['engine']
-    #         self.engine_opt = config['engine_opt']
+    #   self.engine = config['engine']
+    #   self.engine_opt = config['engine_opt']
     #         self.task_timeout = int(config['timeout']) if int(config['timeout']) > 0 else None
     #         self.file_type = config['filetype']
     #         self.solver = config['solver']
     #         # self.top = config['top']
 
 class VerifTask(TaskConfig):
-    def __init__(self,configfile:str,workdir:str,taskname:str,earlylogs:list,logfile=None):
+    def __init__(self,configfile:str,workdir:str,taskname:str,earlylogs:list,logfile=None,useconfig=True):
         super().__init__()
         self.taskname = taskname
-        self.parser_config(configfile,taskname)
+        if useconfig:
+            self.parser_config(configfile,taskname)
         self.workdir = workdir
         self.exe_path = {
                 'yosys':os.getenv('YOSYS',YOSYS),
                 'pono':os.getenv('PONO',PONO),
-                'avr':os.getenv('AVR',AVRPATH),
-                'yosys_abc':os.getenv('YOSYS_ABC',YOSYS_ABC),
-                }
+    'avr':os.getenv('AVR',AVRPATH),
+    'yosys_abc':os.getenv('YOSYS_ABC',YOSYS_ABC),
+    }
         self.chisel2btorpath = CHISEL2BTOR
         self.avr_path = ''
         self.designdir = self.workdir + '/' + 'design'
@@ -183,9 +186,9 @@ class VerifTask(TaskConfig):
         if self.task_timeout is not None:
             signal.signal(signal.SIGALRM,self.handle_timeout)
             signal.alarm(self.task_timeout)
-        for proc in task.deps:
+        for proc in self.deps:
             proc.run()
-        for proc in task.proc_pending:
+        for proc in self.proc_pending:
             proc.run()
         signal.alarm(0)
 

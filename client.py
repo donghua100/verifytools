@@ -6,7 +6,8 @@ import shutil
 import time
 from tomlkit import parse,dumps,table
 import socket
-from msg import sendmsg, recvmsg
+from convert import Convert
+from msg import CMD_CLIENT, COMMAND, CONFIG, CONFIG_CLIENT, FILE, sendmsg, recvmsg, sendmsg_byte
 import logging
 from multiprocessing import Process
 descr = 'run verify tools on a server'
@@ -15,11 +16,16 @@ def parser_cmd():
     # python3 client.py bmc 
     parser = argparse.ArgumentParser(description=descr)
     # parser.add_argument('-c', '--config', help='config file',type=str,default=None)
-    parser.add_argument('config', help='config file',type=str,default=None)
+    parser.add_argument('-c', '--config', help='config file',type=str,default=None)
     parser.add_argument('-o', '--output', help='output dir',type=str,default=None)
     parser.add_argument('-f', '--force', help='overwrite work dir',action='store_true')
-    # parser.add_argument('-ip',help='server ip',type=str,default=None)
-    # parser.add_argument('-port', help='server port',type=int,default=None)
+    parser.add_argument('--bit', help='do bit level mc',action='store_true')
+    parser.add_argument('--prove', help='do prove', action='store_true')
+    parser.add_argument('-s','--source', help='source file',type=str,default=None)
+    parser.add_argument('-t', '--top',help = 'top moudle',type=str,default=None)
+    parser.add_argument('-a','--args', help='args for chisel3',type=str,default=None)
+    parser.add_argument('--ip',help='server ip',type=str,default=None)
+    parser.add_argument('--port', help='server port',type=int,default=None)
     args = parser.parse_args()
     workdir = args.output
     config = args.config
@@ -39,7 +45,7 @@ def parser_cmd():
     # if config == None:
     #     if ip == None and port == None:
     #         print('config file or ip and port must be specify')
-    return config, workdir
+    return config, workdir,args.bit, args.prove,args.source,args.top,args.args,args.ip,args.port
 
 def client(ip, port, cfg,taskname, srcfile, outs_dir):
     print(f"pid : {os.getpid()}")
@@ -50,17 +56,20 @@ def client(ip, port, cfg,taskname, srcfile, outs_dir):
     log.addHandler(logging.StreamHandler())
     log.setLevel(logging.INFO)
     log.info('upload config file')
-    sendmsg(dumps(cfg), s)
+
+    sendmsg(s, CONFIG_CLIENT)
+
+    sendmsg(s, dumps(cfg),CONFIG)
 
 
     src = open(srcfile).read()
     log.info('upload src verify file {}'.format(srcfile))
-    sendmsg(src, s)
+    sendmsg(s,src,FILE)
 
     log.info('task run: {}'.format(taskname))
-    sendmsg(taskname, s)
+    sendmsg(s,taskname)
     # print("aaaaa")
-    res_data = recvmsg(s)
+    res_data,_,_ = recvmsg(s)
     # print("bbbbb")
     if not os.path.exists(outs_dir):
         os.mkdir(outs_dir)
@@ -69,13 +78,13 @@ def client(ip, port, cfg,taskname, srcfile, outs_dir):
     result.close()
     log.warning(res_data)
 
-    trace_data = recvmsg(s)
+    trace_data,_,_ = recvmsg(s)
     if trace_data != 'NO TRACE':
         # print(trace_data)
         trace = open(f'{outs_dir}/trace.txt', 'w')
         trace.write(trace_data)
 
-    vcd_data = recvmsg(s)
+    vcd_data,_,_ = recvmsg(s)
     if vcd_data != 'NO VCD':
         vcd = open(f'{outs_dir}/dump.vcd', 'w')
         vcd.write(vcd_data)
@@ -93,8 +102,49 @@ engine = "avr"
 mode = "prove"
 solver = "msat"
 '''
-def muticlient():
-    cfg_path,outs_dir    = parser_cmd()
+
+def comand_client(outs_dir,bit,prove,src,top,args,ip,port):
+    # cfg_path,outs_dir,bit,prove,src,top,args,ip,port    = parser_cmd()
+    print(outs_dir)
+    workdir = outs_dir
+    convert = Convert(outs_dir,src,top,args)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((ip, port))
+    sendmsg(s,CMD_CLIENT)
+    
+    srcfile = convert.outaig
+    cmd = ''
+    if bit and prove:
+        cmd = 'bit,prove'
+    elif bit and not prove:
+        cmd = 'bit,bmc'
+    elif not bit and prove:
+        cmd = 'word,prove'
+        srcfile = convert.outbtor
+    elif not bit and not prove:
+        cmd = 'word,bmc'
+        srcfile = convert.outbtor
+    src = open(srcfile,'rb').read()
+    # print(src)
+    print(cmd)
+    sendmsg_byte(s,src,COMMAND,cmd)
+    # print(convert.filename,convert.type)
+    sendmsg(s,f"{os.path.basename(srcfile)}");
+    res,_,_ = recvmsg(s)
+    print(res)
+    with open(f"{workdir}/results.txt",'w') as f:
+        f.write(res)
+    
+        
+
+
+
+
+
+
+
+def muticlient(cfg_path,outs_dir):
+    # cfg_path,outs_dir,bit,prove,src,_,_,_,_    = parser_cmd()
     # if cfg_path == None:
     #     cfg = parse(default_config)
     # else:
@@ -147,6 +197,10 @@ def muticlient():
         
 
 if __name__ == '__main__':
-    muticlient()
+    cfg_path,outs_dir,bit,prove,src,top,args,ip,port    = parser_cmd()
+    if cfg_path:
+        muticlient(cfg_path,outs_dir)
+    else:
+        comand_client(outs_dir,bit,prove,src,top,args,ip,port)
     #parser_cmd()
 
