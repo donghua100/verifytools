@@ -7,7 +7,7 @@ import time
 from tomlkit import parse,dumps,table
 import socket
 from convert import Convert
-from msg import CMD_CLIENT, COMMAND, CONFIG, CONFIG_CLIENT, FILE, sendmsg, recvmsg, sendmsg_byte
+from msg import CMD_CLIENT, COMMAND, CONFIG, CONFIG_CLIENT, DIR_CLIENT, FILE, sendmsg, recvmsg, sendmsg_byte
 import logging
 from multiprocessing import Process
 descr = 'run verify tools on a server'
@@ -18,6 +18,7 @@ def parser_cmd():
     # parser.add_argument('-c', '--config', help='config file',type=str,default=None)
     parser.add_argument('-c', '--config', help='config file',type=str,default=None)
     parser.add_argument('-o', '--output', help='output dir',type=str,default=None)
+    parser.add_argument('-d', '--dir', help='verify dir',type=str,default=None)
     parser.add_argument('-f', '--force', help='overwrite work dir',action='store_true')
     parser.add_argument('--bit', help='do bit level mc',action='store_true')
     parser.add_argument('--prove', help='do prove', action='store_true')
@@ -45,7 +46,7 @@ def parser_cmd():
     # if config == None:
     #     if ip == None and port == None:
     #         print('config file or ip and port must be specify')
-    return config, workdir,args.bit, args.prove,args.source,args.top,args.args,args.ip,args.port
+    return args.dir, config, workdir,args.bit, args.prove,args.source,args.top,args.args,args.ip,args.port
 
 def client(ip, port, cfg,taskname, srcfile, outs_dir):
     print(f"pid : {os.getpid()}")
@@ -135,13 +136,6 @@ def comand_client(outs_dir,bit,prove,src,top,args,ip,port):
     with open(f"{workdir}/results.txt",'w') as f:
         f.write(res)
     
-        
-
-
-
-
-
-
 
 def muticlient(cfg_path,outs_dir):
     # cfg_path,outs_dir,bit,prove,src,_,_,_,_    = parser_cmd()
@@ -196,10 +190,40 @@ def muticlient(cfg_path,outs_dir):
         # client(ip, port, new_cfg, task, srcfile, task_out_dir)
         
 
+def dir_client(dir, ip, port, outs_dir):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((ip, port))
+    sendmsg(s,DIR_CLIENT)
+    file_vec = []
+    for root,dirs,files in os.walk(dir):
+        for file in files:
+            if file.endswith('aig') or file.endswith('btor') or file.endswith('btor2'):
+                file_vec.append((os.path.join(root,file),file))
+    files_num = len(file_vec)
+    sendmsg(s,str(files_num))
+    for file_path, file_name in file_vec:
+        f = open(file_path,'rb').read()
+        sendmsg(s, file_name)
+        sendmsg_byte(s, f)
+
+    for i in range(files_num):
+        filename,_,_ = recvmsg(s)
+        res_msg,_,_ = recvmsg(s)
+        out_res = f"{outs_dir}/{filename}"
+        with open(out_res,'w') as f:
+            f.write(res_msg)
+
+
+
+
+
+
 if __name__ == '__main__':
-    cfg_path,outs_dir,bit,prove,src,top,args,ip,port    = parser_cmd()
+    dir,cfg_path,outs_dir,bit,prove,src,top,args,ip,port    = parser_cmd()
     if cfg_path:
         muticlient(cfg_path,outs_dir)
+    elif dir:
+        dir_client(dir,ip,port,outs_dir)
     else:
         comand_client(outs_dir,bit,prove,src,top,args,ip,port)
     #parser_cmd()

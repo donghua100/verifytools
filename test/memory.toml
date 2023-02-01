@@ -1,0 +1,20 @@
+tasks = ["foo","bar"]
+timeout = 300
+[foo]
+engine = "abc"
+mode = "prove"
+depth = 100
+solver = "z3"
+ip = "127.0.0.1"
+port = "2678"
+[bar]
+engine = "avr"
+mode = "prove"
+solver = "msat"
+ip = "192.168.1.34"
+port = "2678"
+[file]
+name = "test/memory.sv"
+# name = "/home/guishuo/Downloads/memory.sv"
+type = "sv"
+top = "memory"

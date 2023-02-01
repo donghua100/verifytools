@@ -6,6 +6,7 @@ CONFIG = 'CONFIG FILE'
 FILE = 'FILE'
 CMD_CLIENT = 'COMMAND CLIENT'
 CONFIG_CLIENT = 'CONFIG CLIENT'
+DIR_CLIENT = 'DIR CLIENT'
 ###########|------headers-------|data|
 # packet: |data len .. head len|data|
 ##########|----4byte-----------|    |

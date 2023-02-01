@@ -73,6 +73,20 @@ port = "2678"
 ```
 - Then the file section, just put the file name you want to verify and the file type. If the file type is system verilog,top module shoud be declared with key word top.
 
-An example can be find in test/config.toml
+## Use Our Tool
+Config examples can be found in test directory. Let's take the example of verifying the memory.sv file and introduce the way our 
+tool is used. The user needs to write a configuration file as we mentioned above to specify the tool and the algorithm for the verification.
+The configuration file for verifying the memory.sv file can be found in test/memory.toml. 
+This memory.sv defines a parameterized circuit that stores data, and we expect that given the input address, 
+we will always get the correct output. To better display the verification results, we generate a random 
+inconsistent error in the circuit so that our tool can detect this error and then give a vcd file. 
+That is, a path of the circuit execution. Use command `python3 client.py -c test/memory.toml` to do verification. Then we will get a counterexample.
+
+# The counterexample
+![vcd](img/vcd.png "vcd")
+
+
 # CSMC Tool Flow
 ![CSMC](img/CSMC-Flow.png "CSMC")
+
+

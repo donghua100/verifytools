@@ -31,6 +31,50 @@ class TaskConfig():
         self.top = None
         self.file_type = 'btor'
         self.args = ''
+    def aig_bmc_config(self):
+        self.mode = 'bmc'
+        self.depth = '10000'
+        self.engine = 'abc'
+        self.solver = 'btor'
+        self.engine_opt = ''
+        self.task_timeout = None
+        self.top = None
+        self.file_type = 'aig'
+        self.args = ''
+
+    def aig_pdr_config(self):
+        self.mode = 'prove'
+        self.depth = '10000'
+        self.engine = 'abc'
+        self.solver = 'btor'
+        self.engine_opt = ''
+        self.task_timeout = None
+        self.top = None
+        self.file_type = 'aig'
+        self.args = ''
+
+    def btor_bmc_config(self):
+        self.mode = 'bmc'
+        self.depth = '10000'
+        self.engine = 'pono'
+        self.solver = 'btor'
+        self.engine_opt = ''
+        self.task_timeout = None
+        self.top = None
+        self.file_type = 'btor'
+        self.args = ''
+
+    def btor_pdr_config(self):
+        self.mode = 'prove'
+        self.depth = '10000'
+        self.engine = 'avr'
+        self.solver = 'msat'
+        self.engine_opt = ''
+        self.task_timeout = None
+        self.top = None
+        self.file_type = 'btor'
+        self.args = ''
+
     def parser_config(self, configfile:str, taskname:str):
         cfg = tomlkit.parse(open(configfile).read())
         self.mode           = cfg[taskname]['mode']
@@ -314,6 +358,42 @@ def log(workdir:str,msg:str):
     logmsgs.append("[VERIF {:02d}:{:02d}:{:02d}] {}".format(tm.tm_hour,tm.tm_min,tm.tm_sec,msg))
     print(logmsgs[-1])
 
+AIG_BMC_TASK = 'AIG_BMC_TASK'
+AIG_PROVE_TASK = 'AIG_PROVE_TASK'
+BTOR_BMC_TASK = 'BTOR_BMC_TASK'
+BTOR_PROVE_TASK = 'BTOR_PROVE_TASK'
+
+def verify_task(file_name, workdir, taskname, task_type=AIG_BMC_TASK, config_file='', useconfig=False, logfile=None):
+    task = VerifTask(config_file,workdir,taskname,[],logfile,useconfig)
+    # print("task_type in verify_task = ",task_type,len(task_type))
+    if task_type == AIG_BMC_TASK:
+        task.aig_bmc_config()
+    elif task_type == AIG_PROVE_TASK:
+        task.aig_pdr_config()
+    elif task_type == BTOR_BMC_TASK:
+        task.btor_bmc_config()
+    elif task_type == BTOR_PROVE_TASK:
+        task.btor_pdr_config()
+    else:
+        print("assert error:",task_type)
+        assert 0
+    srcfile = open(file_name,'rb')
+    srcname = os.path.basename(file_name)
+    task.filename = os.path.splitext(srcname)[0]
+    destfile = open(f"{task.srcdir}/{task.filename}.{task.file_type}","wb")
+    destfile.write(srcfile.read())
+    srcfile.close()
+    destfile.close()
+    task.log('crate workdir')
+    task.log('crate veriftask')
+    task.log(f'write srcfile to {task.srcdir}/{task.filename}.{task.file_type}')
+        # shutil.copy('mycounter-false.btor2',f"{task.designdir}/design.btor")
+    task.log("run task")
+    task.run()
+    task.log('task over')
+    task.exit_callback()
+
+    return task.status
 
 # tasks = {}
 # taskRun = []
