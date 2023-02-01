@@ -48,8 +48,9 @@ def task(conn, tmp_dir, outs_dir, conn_cnt):
     log.info("send results")
     # print("aaaaaaaaaaaaaaaa")
     sendmsg(conn, res_data)
-    # print("bbbbbbbbbbbbbbb")
+    # print("send trace")
     log.info("send trace")
+    # print(res_data)
     if len(re.findall(r'task return status: SAFE', res_data))!=0:
         if not os.path.exists(src_trace_inv):
             sendmsg(conn, 'NO TRACE')
@@ -58,12 +59,13 @@ def task(conn, tmp_dir, outs_dir, conn_cnt):
             sendmsg(conn, trace_inv_data)
     elif len(re.findall(r'task return status: UNSAFE', res_data))!=0:
         if not os.path.exists(src_trace_wit):
+            sendmsg(conn, 'NO TRACE')
+        else:
             trace_wit_data = open(src_trace_wit).read()
             sendmsg(conn, trace_wit_data)
-        else:
-            sendmsg(conn, 'NO TRACE')
     else:
         sendmsg(conn, 'NO TRACE')
+    print("send vcd")
     if os.path.exists(src_trace_vcd):
         vcd_data = open(src_trace_vcd).read()
         sendmsg(conn, vcd_data)
