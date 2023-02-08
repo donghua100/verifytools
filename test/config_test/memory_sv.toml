@@ -1,0 +1,23 @@
+tasks = ["foo","bar"]
+# tasks = ["foo"]
+# tasks = ["bar"]
+timeout = 300
+[foo]
+engine = "abc"
+mode = "prove"
+depth = 100
+solver = "z3"
+ip = "127.0.0.1"
+port = "2678"
+[bar]
+engine = "pono"
+mode = "bmc"
+depth = 100
+solver = "btor"
+ip = "127.0.0.1"
+port = "2678"
+[file]
+name = "test/memory.sv"
+# name = "/home/guishuo/Downloads/memory.sv"
+type = "sv"
+top = "memory"
