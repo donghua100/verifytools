@@ -11,8 +11,8 @@ Follw the [tutorial](https://docs.docker.com/desktop/install/windows-install/) i
 	2) read the uasge: **python3 server.py -h**
 	3) start the service: **python3 server.py -ip 0.0.0.0 -p 2678 -o /root/data/ & **
 5.  use a client to connect the server.
-We use local client.  Modify the config file in the test diectory. Use config0.toml. Change the ip to localhost. 
-Run the client:  **python3 client.py test/config0.toml**
+We use local client.  Modify the config file in the test/config_test diectory. Use config.toml. Change the ip to localhost. 
+Run the client:  **python3 client.py test/config_test config.toml**
 # Or Build it manually.
 ## Required Dependence on Server
 **Yosys, ABC, PONO and AVR**
@@ -28,13 +28,21 @@ cd yosys
 make -j$(nproc)
 sudo make install
 ```
-- Building PONO:
-<https://github.com/upscale-project/pono>
-Following the PONO README to build PONO.
-- Building AVR:
-<https://github.com/aman-goel/avr>
-Follwing the AVR README to build AVR. 
-**NOTE: For more SMT-solver support,you should enable appropriate BACKEND_* flag in src/reach/reach_backend.h to change solver backends in avr project.Look the website carefully .Compile the sorce code and put the binary file in avr build directory .Binary with boolector solver shoud be put in bin_btor, and other solvers is similar. Here is the directory  in avr build directory**
+- Building [PONO](https://github.com/upscale-project/pono)
+	- Download/clone the GitHub repository `git clone https://github.com/upscale-project/pono.git`
+	- RUN `cd pono`
+	- If you don't have bison and flex installed globally, run:`./contrib/setup-bison.sh` and `./contrib/setup-flex.sh`
+	- RUN `./contrib/setup-btor2tools.sh.`
+	- Download the Mathsat solver from https://mathsat.fbk.eu/download.html, unpack it and rename the directory to `./deps/mathsat`
+	- RUN `./configure.sh --with-msat`
+	- RUN `cd build`
+	- RUN `make -j$(nproc)`
+
+ Building [AVR](https://github.com/aman-goel/avr)
+	- Download/clone the GitHub repository `git clone https://github.com/aman-goel/avr.git`
+	- RUN `cd avr`
+	- RUN `/build.sh`
+**NOTE: For more SMT-solver support,you should enable appropriate BACKEND_* flag in src/reach/reach_backend.h to change solver backends in avr project. Look the website carefully .Compile the sorce code and put the binary file in avr build directory .Binary with boolector solver shoud be put in bin_btor, and other solvers is similar. Here is the directory  in avr build directory**
 ```
 build
 ├── avr
@@ -43,6 +51,8 @@ build
 ├── bin_yices
 ├── bin_z3
 ```
+For more details refer to the [README of AVR](https://github.com/aman-goel/avr).or more details refer to the [README of PONO](https://github.com/upscale-project/pono).
+
 - python3 environment
 `pip install tomlkit`
 ## Required Dependence on Client
@@ -74,9 +84,9 @@ port = "2678"
 - Then the file section, just put the file name you want to verify and the file type. If the file type is system verilog,top module shoud be declared with key word top.
 
 ## Use Our Tool
-Config examples can be found in test directory. Let's take the example of verifying the memory.sv file and introduce the way our 
+Config examples can be found in test/config_test directory. Let's take the example of verifying the memory.sv file and introduce the way our 
 tool is used. The user needs to write a configuration file as we mentioned above to specify the tool and the algorithm for the verification.
-The configuration file for verifying the memory.sv file can be found in test/memory.toml. 
+The configuration file for verifying the memory.sv file can be found in test/config_test/memory_sv.toml.
 This memory.sv defines a parameterized circuit that stores data, and we expect that given the input address, 
 we will always get the correct output. To better display the verification results, we generate a random 
 inconsistent error in the circuit so that our tool can detect this error and then give a vcd file. 
