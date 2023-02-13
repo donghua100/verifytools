@@ -2,7 +2,11 @@ import subprocess as sp
 import signal
 import shutil
 import os
+import sys
 import tempfile
+
+root_path = os.path.realpath(os.path.dirname(__file__))
+sys.path.append(root_path)
 from setting import YOSYS,CHISEL2BTOR
 class Convert():
     def __init__(self, workdir, srcfile, top, args = None):

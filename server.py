@@ -7,11 +7,11 @@ import os
 import argparse
 import tomlkit
 from multiprocessing import Pool
-from msg import CMD_CLIENT,CONFIG_CLIENT, DIR_CLIENT, recvmsg_byte,sendmsg, recvmsg
+from utils.msg import CMD_CLIENT,CONFIG_CLIENT, DIR_CLIENT, recvmsg_byte,sendmsg, recvmsg
 import logging
-from core.task import verify_task
-from core.task import AIG_BMC_TASK, AIG_PROVE_TASK, BTOR_BMC_TASK,BTOR_PROVE_TASK
-from core.mutitask import muti_task
+from core.task.verify_task import verify_task
+from core.task.verify_task import AIG_BMC_TASK, AIG_PROVE_TASK, BTOR_BMC_TASK,BTOR_PROVE_TASK
+from core.task.mutitask import muti_task
 
 def task(conn, tmp_dir, outs_dir, conn_cnt):
     config_data,_,_ = recvmsg(conn)
@@ -33,7 +33,7 @@ def task(conn, tmp_dir, outs_dir, conn_cnt):
     if not os.path.exists(work_dir):
         os.mkdir(work_dir)
     work_dir = f'{work_dir}/{taskname}'
-    cmd = f"python3 core/task.py {config_name} -s {verify_name} -t {taskname} -d {work_dir} -f"
+    cmd = f"python3 core/task/task.py {config_name} -s {verify_name} -t {taskname} -d {work_dir} -f"
     proc = sp.Popen(['sh', '-c', cmd])
     while proc.poll() is None:
         pass

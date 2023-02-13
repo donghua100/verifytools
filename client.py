@@ -6,8 +6,8 @@ import shutil
 import time
 from tomlkit import parse,dumps,table
 import socket
-from convert import Convert
-from msg import CMD_CLIENT, COMMAND, CONFIG, CONFIG_CLIENT, DIR_CLIENT, FILE, sendmsg, recvmsg, sendmsg_byte
+from utils.convert import Convert
+from utils.msg import CMD_CLIENT, COMMAND, CONFIG, CONFIG_CLIENT, DIR_CLIENT, FILE, sendmsg, recvmsg, sendmsg_byte
 import logging
 from multiprocessing import Process
 descr = 'run verify tools on a server'

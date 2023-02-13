@@ -5,6 +5,8 @@ import shutil
 import subprocess as sp
 import sys
 
+root_path = os.path.realpath(os.path.dirname(__file__))
+sys.path.append(root_path)
 
 def muti_task(workdir, srcfile, task_types:list):
     n = len(task_types)
@@ -15,7 +17,7 @@ def muti_task(workdir, srcfile, task_types:list):
     for i, task in enumerate(tasks):
         task_type =  task_types[i] 
         task_workdir = f"{workdir}/{task}"
-        cmd = f"python3 core/verify_task.py  -s {srcfile} -t {task} -w {task_workdir} -ty {task_type} -f"
+        cmd = f"python3 core/task/verify_task.py  -s {srcfile} -t {task} -w {task_workdir} -ty {task_type} -f"
         print(cmd)
         proc = sp.Popen(['sh', '-c', cmd])
         taskRun[idx] = proc

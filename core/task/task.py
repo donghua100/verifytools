@@ -11,7 +11,10 @@ import subprocess as sp
 import tempfile
 
 import tomlkit
-sys.path.append('core')
+root_path = os.path.realpath(os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(root_path)
+# sys.path.append('core')
+# sys.path.append('core/engine')
 import Proc
 from toolpath import AVRPATH,PONO,YOSYS,YOSYS_ABC,CHISEL2BTOR
 
@@ -221,12 +224,22 @@ class VerifTask(TaskConfig):
             self.make_avrpr_workers_config(self.solver)
         self.log(f"mode is {self.mode}")
         self.log(f'engine is {self.engine}')
-        if self.mode == 'bmc':
-            import bmc_mode
-            bmc_mode.run(self)
-        elif self.mode == 'prove':
-            import prove_mode
-            prove_mode.run(self)
+        if self.engine == 'pono':
+            from engine import engine_pono
+            engine_pono.run(self)
+        elif self.engine == 'avr':
+            from engine import engine_avr
+            engine_avr.run(self)
+        elif task.engine == 'avrpr':
+            from engine import engine_avrpr
+            engine_avrpr.run(self)
+        elif self.engine == 'abc':
+            from engine import engine_abc
+            engine_abc.run(self)
+        else:
+            assert False,f'not support engine:{task.engine}'
+        
+
         if self.task_timeout is not None:
             signal.signal(signal.SIGALRM,self.handle_timeout)
             signal.alarm(self.task_timeout)
@@ -358,42 +371,6 @@ def log(workdir:str,msg:str):
     logmsgs.append("[VERIF {:02d}:{:02d}:{:02d}] {}".format(tm.tm_hour,tm.tm_min,tm.tm_sec,msg))
     print(logmsgs[-1])
 
-AIG_BMC_TASK = 'AIG_BMC_TASK'
-AIG_PROVE_TASK = 'AIG_PROVE_TASK'
-BTOR_BMC_TASK = 'BTOR_BMC_TASK'
-BTOR_PROVE_TASK = 'BTOR_PROVE_TASK'
-
-def verify_task(file_name, workdir, taskname, task_type=AIG_BMC_TASK, config_file='', useconfig=False, logfile=None):
-    task = VerifTask(config_file,workdir,taskname,[],logfile,useconfig)
-    # print("task_type in verify_task = ",task_type,len(task_type))
-    if task_type == AIG_BMC_TASK:
-        task.aig_bmc_config()
-    elif task_type == AIG_PROVE_TASK:
-        task.aig_pdr_config()
-    elif task_type == BTOR_BMC_TASK:
-        task.btor_bmc_config()
-    elif task_type == BTOR_PROVE_TASK:
-        task.btor_pdr_config()
-    else:
-        print("assert error:",task_type)
-        assert 0
-    srcfile = open(file_name,'rb')
-    srcname = os.path.basename(file_name)
-    task.filename = os.path.splitext(srcname)[0]
-    destfile = open(f"{task.srcdir}/{task.filename}.{task.file_type}","wb")
-    destfile.write(srcfile.read())
-    srcfile.close()
-    destfile.close()
-    task.log('crate workdir')
-    task.log('crate veriftask')
-    task.log(f'write srcfile to {task.srcdir}/{task.filename}.{task.file_type}')
-        # shutil.copy('mycounter-false.btor2',f"{task.designdir}/design.btor")
-    task.log("run task")
-    task.run()
-    task.log('task over')
-    task.exit_callback()
-
-    return task.status
 
 # tasks = {}
 # taskRun = []

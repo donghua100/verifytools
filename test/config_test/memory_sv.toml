@@ -17,7 +17,7 @@ solver = "btor"
 ip = "127.0.0.1"
 port = "2678"
 [file]
-name = "test/memory.sv"
+name = "test/config_test/memory-false.sv"
 # name = "/home/guishuo/Downloads/memory.sv"
 type = "sv"
 top = "memory"
