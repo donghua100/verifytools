@@ -3,7 +3,8 @@
 /__pycache__
 /demo
 /demo.txt
-/core/__pycache__
+/core/**/__pycache__
+/utils/__pycache__
 /tasks
 /tmp
 /.metals
