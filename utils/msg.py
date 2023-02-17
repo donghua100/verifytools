@@ -7,6 +7,11 @@ FILE = 'FILE'
 CMD_CLIENT = 'COMMAND CLIENT'
 CONFIG_CLIENT = 'CONFIG CLIENT'
 DIR_CLIENT = 'DIR CLIENT'
+
+DIR_DO_SEP = 'DIR TASK DO SEPRATELY'
+DIR_DO_PARALLY = 'DIR TASK DO PARALLY'
+
+
 ###########|------headers-------|data|
 # packet: |data len .. head len|data|
 ##########|----4byte-----------|    |

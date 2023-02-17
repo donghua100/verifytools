@@ -7,7 +7,7 @@ import os
 import argparse
 import tomlkit
 from multiprocessing import Pool
-from utils.msg import CMD_CLIENT,CONFIG_CLIENT, DIR_CLIENT, recvmsg_byte,sendmsg, recvmsg
+from utils.msg import CMD_CLIENT,CONFIG_CLIENT, DIR_CLIENT, DIR_DO_PARALLY, DIR_DO_SEP, recvmsg_byte,sendmsg, recvmsg
 import logging
 from core.task.verify_task import verify_task
 from core.task.verify_task import AIG_BMC_TASK, AIG_PROVE_TASK, BTOR_BMC_TASK,BTOR_PROVE_TASK
@@ -153,6 +153,16 @@ def dir_task(conn, tmp_dir, outs_dir, conn_cnt):
         f.write(file_context)
         f.close()
 
+    DIR_TYPE,_,_ = recvmsg(conn)
+    print(DIR_TYPE)
+    if os.cpu_count():
+        if DIR_TYPE == DIR_DO_PARALLY:
+            p = Pool(os.cpu_count()//2)
+        else:
+            p = Pool(os.cpu_count())
+    else:
+        p = Pool(1)
+
     for name, path in file_vec:
         prefix_name, file_type = os.path.splitext(name)
         file_type = file_type[1:]
@@ -164,17 +174,13 @@ def dir_task(conn, tmp_dir, outs_dir, conn_cnt):
             os.mkdir(workdir)
         file_name = path
         taskname = ''
-        if os.cpu_count():
-            p = Pool(os.cpu_count())
-        else:
-            p = Pool(1)
-        workdir_bmc = f'{workdir}/bmc'
-        workdir_prove = f'{workdir}/prove'
-        if not os.path.exists(workdir_bmc):
-            os.mkdir(workdir_bmc)
-
-        if not os.path.exists(workdir_prove):
-            os.mkdir(workdir_prove)
+        # workdir_bmc = f'{workdir}/bmc'
+        # workdir_prove = f'{workdir}/prove'
+        # if not os.path.exists(workdir_bmc):
+        #     os.mkdir(workdir_bmc)
+        #
+        # if not os.path.exists(workdir_prove):
+        #     os.mkdir(workdir_prove)
 
         # if file_type == 'aig':
         #     taskname = f'{prefix_name}_bmc'
@@ -190,24 +196,86 @@ def dir_task(conn, tmp_dir, outs_dir, conn_cnt):
         # else:
         #     assert 0
 
-        if file_type == 'aig':
-            muti_task(workdir, file_name, [AIG_BMC_TASK, AIG_PROVE_TASK])
-        elif file_type == 'btor' or file_type == 'btor2':
-            muti_task(workdir, file_name, [BTOR_BMC_TASK, BTOR_PROVE_TASK])
+        if DIR_TYPE == DIR_DO_SEP:
+            if file_type == 'aig':
+                workdir_bmc = f"{workdir}/bitbmc"
+                if not os.path.exists(workdir_bmc):
+                    os.mkdir(workdir_bmc)
+                # verify_task(file_name, workdir_bmc, 'bitbmc', AIG_BMC_TASK)
+                p.apply_async(verify_task, args=(file_name, workdir_bmc, 'bitbmc', AIG_BMC_TASK,))
 
-    for name, file_path in file_vec:
-        prefix_name = os.path.splitext(name)[0]
-        workdir = f"{outs_dir}/{prefix_name}"
-        dst_res = f"{workdir}/results.txt"
-        dst_vcd = f"{workdir}/dump.vcd"
-        dst_trace = f"{workdir}/trace.txt"
+                workdir_prove = f"{workdir}/bitprove"
+                if not os.path.exists(workdir_prove):
+                    os.mkdir(workdir_prove)
+                # verify_task(file_name, workdir_prove, 'bitprove', AIG_PROVE_TASK)
+                p.apply_async(verify_task, args=(file_name, workdir_prove, 'bitprove', AIG_PROVE_TASK,))
 
-        sendmsg(conn, f"{prefix_name}.txt")
-        res_msg = open(dst_res, 'r').read()
-        sendmsg(conn, res_msg)
+                # muti_task(workdir, file_name, [AIG_BMC_TASK, AIG_PROVE_TASK])
+            elif file_type == 'btor' or file_type == 'btor2':
+                workdir_bmc = f"{workdir}/wordbmc"
+                if not os.path.exists(workdir_bmc):
+                    os.mkdir(workdir_bmc)
+                # verify_task(file_name, workdir_bmc, 'wordbmc', BTOR_BMC_TASK)
+                p.apply_async(verify_task, args=(file_name, workdir_bmc, 'wordbmc', BTOR_BMC_TASK,))
 
+                workdir_prove = f"{workdir}/wordprove"
+                if not os.path.exists(workdir_prove):
+                    os.mkdir(workdir_prove)
+                # verify_task(file_name, workdir_prove, 'wordprove', AIG_PROVE_TASK)
+                p.apply_async(verify_task, args=(file_name, workdir_prove, 'wordprove', BTOR_PROVE_TASK,))
 
+        elif DIR_TYPE == DIR_DO_PARALLY:
+            if file_type == 'aig':
 
+                p.apply_async(muti_task, args=(workdir, file_name, [AIG_BMC_TASK, AIG_PROVE_TASK],))
+                # muti_task(workdir, file_name, [AIG_BMC_TASK, AIG_PROVE_TASK])
+            elif file_type == 'btor' or file_type == 'btor2':
+
+                p.apply_async(muti_task, args=(workdir, file_name, [BTOR_BMC_TASK, BTOR_PROVE_TASK],))
+                # muti_task(workdir, file_name, [BTOR_BMC_TASK, BTOR_PROVE_TASK])
+            else:
+                assert 0
+
+    p.close()
+    p.join()
+        
+    if DIR_TYPE == DIR_DO_SEP:
+        for name,_ in file_vec:
+            prefix_name, file_type = os.path.splitext(name)
+            file_type = file_type[1:]
+            workdir = f"{outs_dir}/{prefix_name}"
+            workdir_bmc = f"{workdir}/bitbmc"
+            workdir_prove = f"{workdir}/bitprove"
+            if file_type == 'btor' or file_type == 'btor2':
+                workdir_bmc = f"{workdir}/wordbmc"
+                workdir_prove = f"{workdir}/wordprove"
+
+                dst_res_bmc = f"{workdir_bmc}/results.txt"
+                dst_res_prove = f"{workdir_prove}/results.txt"
+
+                sendmsg(conn, f"{prefix_name}_{file_type}_bmc.txt")
+                res_mgs_bmc = open(dst_res_bmc, 'r').read()
+                sendmsg(conn,res_mgs_bmc)
+
+                sendmsg(conn, f"{prefix_name}_{file_type}_prove.txt")
+                res_mgs_prove = open(dst_res_prove,'r').read()
+                sendmsg(conn,res_mgs_prove)
+
+    elif DIR_TYPE == DIR_DO_PARALLY:
+        for name, file_path in file_vec:
+            # prefix_name = os.path.splitext(name)[0]
+            prefix_name, file_type = os.path.splitext(name)
+            file_type = file_type[1:]
+            workdir = f"{outs_dir}/{prefix_name}"
+            dst_res = f"{workdir}/results.txt"
+            dst_vcd = f"{workdir}/dump.vcd"
+            dst_trace = f"{workdir}/trace.txt"
+
+            sendmsg(conn, f"{prefix_name}_{file_type}.txt")
+            res_msg = open(dst_res, 'r').read()
+            sendmsg(conn, res_msg)
+    else:
+        assert 0
 
 
 

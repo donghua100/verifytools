@@ -40,7 +40,7 @@ class TaskConfig():
         self.engine = 'abc'
         self.solver = 'btor'
         self.engine_opt = ''
-        self.task_timeout = None
+        self.task_timeout = 3600
         self.top = None
         self.file_type = 'aig'
         self.args = ''
@@ -51,7 +51,7 @@ class TaskConfig():
         self.engine = 'abc'
         self.solver = 'btor'
         self.engine_opt = ''
-        self.task_timeout = None
+        self.task_timeout = 3600
         self.top = None
         self.file_type = 'aig'
         self.args = ''
@@ -59,10 +59,10 @@ class TaskConfig():
     def btor_bmc_config(self):
         self.mode = 'bmc'
         self.depth = '10000'
-        self.engine = 'pono'
+        self.engine = 'avr'
         self.solver = 'btor'
         self.engine_opt = ''
-        self.task_timeout = None
+        self.task_timeout = 3600
         self.top = None
         self.file_type = 'btor'
         self.args = ''
@@ -71,9 +71,9 @@ class TaskConfig():
         self.mode = 'prove'
         self.depth = '10000'
         self.engine = 'avr'
-        self.solver = 'msat'
+        self.solver = 'btor'
         self.engine_opt = ''
-        self.task_timeout = None
+        self.task_timeout = 3600
         self.top = None
         self.file_type = 'btor'
         self.args = ''
@@ -230,7 +230,7 @@ class VerifTask(TaskConfig):
         elif self.engine == 'avr':
             from engine import engine_avr
             engine_avr.run(self)
-        elif task.engine == 'avrpr':
+        elif self.engine == 'avrpr':
             from engine import engine_avrpr
             engine_avrpr.run(self)
         elif self.engine == 'abc':

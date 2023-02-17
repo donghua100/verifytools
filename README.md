@@ -1,5 +1,5 @@
-#  CSMC: Distributed Verified Tool Based On Model Checking
-CSMC is a tool working with Client/Server architecture for Hardware Model Checking.Once environment configuration has been done on server,one can use it's service to check hardwave design conveniently.
+#  DHMC: Distributed Verified Tool Based On Model Checking
+DHMC is a tool working with Client/Server architecture for Hardware Model Checking.Once environment configuration has been done on server,one can use it's service to check hardwave design conveniently.
 # How  to Build it
 ## We recommend use our tool with docker. 
 Follw the [tutorial](https://docs.docker.com/desktop/install/windows-install/) install on Windows. If you use linux , follow this [tutorial](https://docs.docker.com/desktop/install/linux-install/).
@@ -38,7 +38,7 @@ sudo make install
 	- RUN `cd build`
 	- RUN `make -j$(nproc)`
 
- Building [AVR](https://github.com/aman-goel/avr)
+- Building [AVR](https://github.com/aman-goel/avr)
 	- Download/clone the GitHub repository `git clone https://github.com/aman-goel/avr.git`
 	- RUN `cd avr`
 	- RUN `/build.sh`
@@ -96,7 +96,7 @@ That is, a path of the circuit execution. Use command `python3 client.py -c test
 ![vcd](img/vcd.png "vcd")
 
 
-# CSMC Tool Flow
-![CSMC](img/CSMC-Flow.png "CSMC")
+# DHMC Tool Flow
+![DHMC](img/CSMC-Flow.png "DHMC")
 
 
