@@ -203,9 +203,9 @@ def dir_client(dir, ip, port, outs_dir,sep):
             if file.endswith('aig') or file.endswith('btor') or file.endswith('btor2'):
                 pre, t = os.path.splitext(file)
                 if file in d:
-                    file = pre + f"({d[file]})" + t
                     d[file] += 1
-                    file_vec.append((os.path.join(root,file),file))
+                    file_suf = pre + f"_{d[file]}" + t
+                    file_vec.append((os.path.join(root,file),file_suf))
                 else:
                     d[file] = 1
                     file_vec.append((os.path.join(root,file),file))

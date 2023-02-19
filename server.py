@@ -166,7 +166,7 @@ def dir_task(conn, tmp_dir, outs_dir, conn_cnt):
     for name, path in file_vec:
         prefix_name, file_type = os.path.splitext(name)
         file_type = file_type[1:]
-        workdir = f"{outs_dir}/{prefix_name}"
+        workdir = f"{outs_dir}/{prefix_name}_{file_type}"
         if not os.path.exists(workdir):
             os.mkdir(workdir)
         else:
@@ -250,16 +250,16 @@ def dir_task(conn, tmp_dir, outs_dir, conn_cnt):
                 workdir_bmc = f"{workdir}/wordbmc"
                 workdir_prove = f"{workdir}/wordprove"
 
-                dst_res_bmc = f"{workdir_bmc}/results.txt"
-                dst_res_prove = f"{workdir_prove}/results.txt"
+            dst_res_bmc = f"{workdir_bmc}/results.txt"
+            dst_res_prove = f"{workdir_prove}/results.txt"
 
-                sendmsg(conn, f"{prefix_name}_{file_type}_bmc.txt")
-                res_mgs_bmc = open(dst_res_bmc, 'r').read()
-                sendmsg(conn,res_mgs_bmc)
+            sendmsg(conn, f"{prefix_name}_{file_type}_bmc.txt")
+            res_mgs_bmc = open(dst_res_bmc, 'r').read()
+            sendmsg(conn,res_mgs_bmc)
 
-                sendmsg(conn, f"{prefix_name}_{file_type}_prove.txt")
-                res_mgs_prove = open(dst_res_prove,'r').read()
-                sendmsg(conn,res_mgs_prove)
+            sendmsg(conn, f"{prefix_name}_{file_type}_prove.txt")
+            res_mgs_prove = open(dst_res_prove,'r').read()
+            sendmsg(conn,res_mgs_prove)
 
     elif DIR_TYPE == DIR_DO_PARALLY:
         for name, file_path in file_vec:

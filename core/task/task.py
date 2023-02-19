@@ -60,7 +60,7 @@ class TaskConfig():
         self.mode = 'bmc'
         self.depth = '10000'
         self.engine = 'avr'
-        self.solver = 'btor'
+        self.solver = 'yices'
         self.engine_opt = ''
         self.task_timeout = 3600
         self.top = None
@@ -71,7 +71,7 @@ class TaskConfig():
         self.mode = 'prove'
         self.depth = '10000'
         self.engine = 'avr'
-        self.solver = 'btor'
+        self.solver = 'yices'
         self.engine_opt = ''
         self.task_timeout = 3600
         self.top = None
