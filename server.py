@@ -243,7 +243,7 @@ def dir_task(conn, tmp_dir, outs_dir, conn_cnt):
         for name,_ in file_vec:
             prefix_name, file_type = os.path.splitext(name)
             file_type = file_type[1:]
-            workdir = f"{outs_dir}/{prefix_name}"
+            workdir = f"{outs_dir}/{prefix_name}_{file_type}"
             workdir_bmc = f"{workdir}/bitbmc"
             workdir_prove = f"{workdir}/bitprove"
             if file_type == 'btor' or file_type == 'btor2':
@@ -266,7 +266,7 @@ def dir_task(conn, tmp_dir, outs_dir, conn_cnt):
             # prefix_name = os.path.splitext(name)[0]
             prefix_name, file_type = os.path.splitext(name)
             file_type = file_type[1:]
-            workdir = f"{outs_dir}/{prefix_name}"
+            workdir = f"{outs_dir}/{prefix_name}_{file_type}"
             dst_res = f"{workdir}/results.txt"
             dst_vcd = f"{workdir}/dump.vcd"
             dst_trace = f"{workdir}/trace.txt"
